@@ -32,7 +32,7 @@ digital_out tongue = digital_out(Brain.ThreeWirePort.C);
 bool wingState = false;
 bool adjustState = false;
 bool tongueState = false;
-inertial inert = inertial(PORT2);//7 on actual
+inertial inert = inertial(PORT7);//7 on actual
 bool autonStarted = false;
 int currAuton = 0;
 controller controller1 = controller();
@@ -309,7 +309,8 @@ void pre_auton(void) {
 /*---------------------------------------------------------------------------*/
 
 void autonomous(void) {
-    switch(currAuton) {
+    blueLeft();
+    /*switch(currAuton) {
         case 0: blueLeft(); break;
         case 1: redLeft(); break;
         case 2: blueRight(); break;
@@ -317,6 +318,7 @@ void autonomous(void) {
         case 4: skillsAuton(); break; // NEW AUTON
         default: break;
     }
+    */
 }
 
 
@@ -362,8 +364,8 @@ void adjustMananger(){
 void tongueManager(){
     tongueState = true;
     while(1){
-        if(controller1.ButtonDown.pressing()){
-            while(controller1.ButtonDown.pressing()){
+        if(controller1.ButtonB.pressing()){
+            while(controller1.ButtonB.pressing()){
                 wait(2,msec);
             }
             tongueState=!tongueState;
