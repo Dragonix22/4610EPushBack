@@ -10,8 +10,9 @@
 
 #include "vex.h"
 #include <cmath>
+#include <string>
 using namespace vex;
-using namespace std;
+using std::string;
 // A global instance of competition
 competition Competition;
 vex::brain Brain;
@@ -197,86 +198,96 @@ void blueRight(){
 
 }
 
-void match(){
+void skillsAuton(){
 
 }
 
-
 void pre_auton(void) {
+    // Clear screen and set font
     Brain.Screen.clearScreen();
-    Brain.Screen.setFont(vex::fontType::mono60);
+    Brain.Screen.setFont(mono60);
+
+    // Calibrate inertial
     inert.calibrate();
-    Brain.Screen.printAt(5,30,"calibrating inert:");
+    Brain.Screen.printAt(5, 30, "Calibrating inertial...");
+    while(inert.isCalibrating()) wait(100, msec); // wait for calibration
     Brain.Screen.clearScreen();
+
+    // Define auton names
+    const int NUM_AUTONS = 5;
+    string autonNames[NUM_AUTONS] = {
+        "Blue Left",
+        "Red Left",
+        "Blue Right",
+        "Red Right",
+        "Skills Auton"
+    };
+
+    // Define button positions (x, y, width, height)
+    struct Button { int x, y, w, h; };
+    Button autonButtons[NUM_AUTONS] = {
+        {270, 10, 80, 80},   // Blue Left
+        {355, 10, 80, 80},   // Red Left
+        {270, 95, 80, 80},   // Blue Right
+        {355, 95, 80, 80},   // Red Right
+        {270, 180, 165, 80}  // Skills Auton (bigger button)
+    };
+
     bool selected = false;
+
     while(!selected){
-        Brain.Screen.setFillColor(red);
-        Brain.Screen.drawRectangle(270, 10, 80, 80);
-        Brain.Screen.drawRectangle(355, 10, 80, 80);
-        Brain.Screen.printAt(295, 65, "L");
-        Brain.Screen.printAt(380, 65, "R");  
-        Brain.Screen.setFillColor(blue);
-        Brain.Screen.drawRectangle(270, 95, 80, 80);
-        Brain.Screen.drawRectangle(355, 95, 80, 80);
+        // Draw buttons dynamically
+        for(int i=0; i<NUM_AUTONS; i++){
+            if(i == 0 || i == 2) Brain.Screen.setFillColor(blue);
+            else if(i == 1 || i == 3) Brain.Screen.setFillColor(red);
+            else Brain.Screen.setFillColor(green); // Skills auton
 
-        Brain.Screen.printAt(295, 150, "L");
-        Brain.Screen.printAt(380, 150, "R");
+            Brain.Screen.drawRectangle(autonButtons[i].x, autonButtons[i].y,
+                                       autonButtons[i].w, autonButtons[i].h);
 
-
-        
-        Brain.Screen.setFillColor(black);
-        Brain.Screen.setFont(vex::fontType::mono30);
-
-        Brain.Screen.printAt(5, 170, "SELECTED AUTON:");
-        switch(currAuton){
-                default: Brain.Screen.printAt(5,210,"Unknown");
-            case 0:
-                Brain.Screen.printAt(5,210,"                         ");
-                Brain.Screen.printAt(5,210,"Blue Left");
-                break;
-            case 1:
-                Brain.Screen.printAt(5,210,"                         ");
-                Brain.Screen.printAt(5,210,"Red Left");
-                break;
-            case 2:
-                Brain.Screen.printAt(5,210,"                         ");
-                Brain.Screen.printAt(5,210,"Blue Right");
-                break;
-            case 3:
-                Brain.Screen.printAt(5,210,"                         ");
-                Brain.Screen.printAt(5,210,"Red Right");
-                break;
+            // Draw text
+            Brain.Screen.setFillColor(black);
+            Brain.Screen.setFont(mono30);
+            Brain.Screen.printAt(autonButtons[i].x + 10, autonButtons[i].y + 50, autonNames[i].c_str());
         }
-        
+
+        // Display currently selected auton
+        Brain.Screen.setFillColor(black);
+        Brain.Screen.setFont(mono30);
+        Brain.Screen.printAt(5, 170, "SELECTED AUTON:");
+        Brain.Screen.printAt(5, 210, "                     "); // clear line
+        Brain.Screen.printAt(5, 210, autonNames[currAuton].c_str());
+
+        // Check for screen touch
         if(Brain.Screen.pressing()){
             while(Brain.Screen.pressing()) wait(10,msec);
-            if (270 < Brain.Screen.xPosition() && Brain.Screen.xPosition() < 350 &&
-                10 < Brain.Screen.yPosition() && Brain.Screen.yPosition() < 90) {
-                currAuton = 0;
-            }
-            else if (355 < Brain.Screen.xPosition() && Brain.Screen.xPosition() < 435 &&
-                10 < Brain.Screen.yPosition() && Brain.Screen.yPosition() < 90) {
-                currAuton = 1;
-            }
-            else if (270 < Brain.Screen.xPosition() && Brain.Screen.xPosition() < 350 &&
-                95 < Brain.Screen.yPosition() && Brain.Screen.yPosition() < 175) {
-                currAuton = 2;
-            }
-            else if (355 < Brain.Screen.xPosition() && Brain.Screen.xPosition() < 435 &&
-                95 < Brain.Screen.yPosition() && Brain.Screen.yPosition() < 175) {
-                currAuton = 3;
-            }
 
-            else if(currAuton==4){
-                currAuton=0;
+            int mx = Brain.Screen.xPosition();
+            int my = Brain.Screen.yPosition();
+
+            for(int i=0; i<NUM_AUTONS; i++){
+                if(mx >= autonButtons[i].x && mx <= autonButtons[i].x + autonButtons[i].w &&
+                   my >= autonButtons[i].y && my <= autonButtons[i].y + autonButtons[i].h){
+                    currAuton = i;
+                    selected = true;
+                    autonStarted = true;
+                    break;
+                }
             }
-            selected=true;
-            autonStarted=true;
         }
 
         wait(50,msec);
     }
+
+    // Final confirmation
+    Brain.Screen.clearScreen();
+    Brain.Screen.setFont(mono60);
+    Brain.Screen.printAt(50, 100, "Auton Selected:");
+    Brain.Screen.printAt(50, 150, autonNames[currAuton].c_str());
+    wait(2, sec); // brief pause before auton starts
 }
+
+
 /*
 void pre_auton(void) {
     Brain.Screen.clearScreen();
@@ -298,15 +309,16 @@ void pre_auton(void) {
 /*---------------------------------------------------------------------------*/
 
 void autonomous(void) {
-    currAuton = 1; //set auton here for testing without screen
     switch(currAuton) {
         case 0: blueLeft(); break;
         case 1: redLeft(); break;
         case 2: blueRight(); break;
         case 3: redRight(); break;
+        case 4: skillsAuton(); break; // NEW AUTON
         default: break;
     }
 }
+
 
 /*---------------------------------------------------------------------------*/
 /*                                                                           */
