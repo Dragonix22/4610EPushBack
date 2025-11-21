@@ -11,6 +11,8 @@
 #include "vex.h"
 #include <cmath>
 #include <string>
+#include <algorithm>
+
 using namespace vex;
 using std::string;
 // A global instance of competition
@@ -32,7 +34,7 @@ digital_out tongue = digital_out(Brain.ThreeWirePort.C);
 bool wingState = false;
 bool adjustState = false;
 bool tongueState = false;
-inertial inert = inertial(PORT7);//7 on actual
+inertial inert = inertial(PORT16);
 bool autonStarted = false;
 int currAuton = 0;
 controller controller1 = controller();
@@ -59,9 +61,16 @@ void driveForwardProp(double distance){
     leftFrontTop.resetPosition();
     leftFrontBottom.resetPosition();
     leftBack.resetPosition();
-    distance = inchesToDegrees(distance);
-    while(leftFrontTop.position(degrees) < distance){
-        double speed = (distance + leftFrontTop.position(degrees))/2;
+    double target = inchesToDegrees(distance);
+    double k_p = 0.5;
+    while(true){
+        double position = leftFrontTop.position(degrees);
+        double error = target - position;
+        if (fabs(error) < 10) break; 
+
+        double speed = k_p * error;
+        speed = std::min(std::max(speed, -100.0), 100.0);
+
         leftFrontTop.spin(forward,speed,percent);
         leftFrontBottom.spin(forward,speed,percent);
         leftBack.spin(forward,speed,percent);
@@ -69,7 +78,6 @@ void driveForwardProp(double distance){
         rightFrontBottom.spin(forward,speed,percent);
         rightBack.spin(forward,speed,percent);
     }
-
     leftFrontTop.stop(hold);
     leftFrontBottom.stop(hold);
     leftBack.stop(hold);
@@ -82,39 +90,50 @@ void driveReverseProp(double distance){
     leftFrontTop.resetPosition();
     leftFrontBottom.resetPosition();
     leftBack.resetPosition();
-    distance = inchesToDegrees(distance);
-    while(leftFrontTop.position(degrees) > -distance){
+    double target = -inchesToDegrees(distance);
+    double k_p = 0.5;
+    while(true){
+        double position = leftFrontTop.position(degrees);
+        double error = target - position;
+        if (fabs(error) < 10) break; 
 
-        double speed = (distance - leftFrontTop.position(degrees))/2;
-        leftFrontTop.spin(reverse,speed,percent);
-        leftFrontBottom.spin(reverse,speed,percent);
-        leftBack.spin(reverse,speed,percent);
-        rightFrontTop.spin(reverse,speed,percent);
-        rightFrontBottom.spin(reverse,speed,percent);
-        rightBack.spin(reverse,speed,percent);
-    }
+        double speed = k_p * error;
+        speed = std::min(std::max(speed, -100.0), 100.0);
 
-    leftFrontTop.stop(brake);
-    leftFrontBottom.stop(brake);
-    leftBack.stop(brake);
-    rightFrontTop.stop(brake);
-    rightFrontBottom.stop(brake);
-    rightBack.stop(brake);
-
-}
-
-
-void turnLeftProp(double distance){
-    inert.resetRotation();
-    while(inert.rotation(degrees)>=-distance+5){
-
-        double speed = (distance + inert.rotation(degrees))/4;
-        leftFrontTop.spin(reverse,speed,percent);
-        leftFrontBottom.spin(reverse,speed,percent);
-        leftBack.spin(reverse,speed,percent);
+        leftFrontTop.spin(forward,speed,percent);
+        leftFrontBottom.spin(forward,speed,percent);
+        leftBack.spin(forward,speed,percent);
         rightFrontTop.spin(forward,speed,percent);
         rightFrontBottom.spin(forward,speed,percent);
         rightBack.spin(forward,speed,percent);
+    }
+    leftFrontTop.stop(hold);
+    leftFrontBottom.stop(hold);
+    leftBack.stop(hold);
+    rightFrontTop.stop(hold);
+    rightFrontBottom.stop(hold);
+    rightBack.stop(hold);
+}
+
+
+void turnLeftProp(double degreesTarget) {
+    inert.resetRotation();
+    double k_p = 0.4;
+
+    while (true) {
+        double current = inert.rotation(degrees);
+        double error = -degreesTarget - current; // negative target for left
+        if (fabs(error) < 2) break; // stop in range
+
+        double speed = k_p * error;
+        speed = std::min(std::max(speed, -100.0), 100.0);
+
+        leftFrontTop.spin(reverse, speed, percent);
+        leftFrontBottom.spin(reverse, speed, percent);
+        leftBack.spin(reverse, speed, percent);
+        rightFrontTop.spin(forward, speed, percent);
+        rightFrontBottom.spin(forward, speed, percent);
+        rightBack.spin(forward, speed, percent);
     }
 
     leftFrontTop.stop(coast);
@@ -125,25 +144,32 @@ void turnLeftProp(double distance){
     rightBack.stop(coast);
 
 }
-
-void turnRightProp(double distance){
+void turnRightProp(double degreesTarget) {
     inert.resetRotation();
-    while(inert.rotation(degrees) <= distance-5){
-        double speed = (distance - inert.rotation(degrees))/4;
-        leftFrontTop.spin(forward,speed,percent);
-        leftFrontBottom.spin(forward,speed,percent);
-        leftBack.spin(forward,speed,percent);
-        rightFrontTop.spin(reverse,speed,percent);
-        rightFrontBottom.spin(reverse,speed,percent);
-        rightBack.spin(reverse,speed,percent);
+    double k_p = 0.4;
+
+    while (true) {
+        double current = inert.rotation(degrees);
+        double error = degreesTarget - current; 
+        if (fabs(error) < 2) break; // stop in range
+
+        double speed = k_p * error;
+        speed = std::min(std::max(speed, -100.0), 100.0);
+
+        leftFrontTop.spin(forward, speed, percent);
+        leftFrontBottom.spin(forward, speed, percent);
+        leftBack.spin(forward, speed, percent);
+        rightFrontTop.spin(reverse, speed, percent);
+        rightFrontBottom.spin(reverse, speed, percent);
+        rightBack.spin(reverse, speed, percent);
     }
 
-    leftFrontTop.stop(brake);
-    leftFrontBottom.stop(brake);
-    leftBack.stop(brake);
-    rightFrontTop.stop(brake);
-    rightFrontBottom.stop(brake);
-    rightBack.stop(brake);
+    leftFrontTop.stop(coast);
+    leftFrontBottom.stop(coast);
+    leftBack.stop(coast);
+    rightFrontTop.stop(coast);
+    rightFrontBottom.stop(coast);
+    rightBack.stop(coast);
 
 }
 
@@ -168,8 +194,8 @@ void redLeft(){
 }
 
 void blueLeft(){
-   driveForwardProp(4);
-   driveReverseProp(4);
+   //driveForwardProp(4);
+   //driveReverseProp(4);
 
 
 }
@@ -216,10 +242,10 @@ void pre_auton(void) {
     // Define auton names
     const int NUM_AUTONS = 5;
     string autonNames[NUM_AUTONS] = {
-        "Blue Left",
-        "Red Left",
-        "Blue Right",
-        "Red Right",
+        "Blue L",
+        "Red L",
+        "Blue R",
+        "Red R",
         "Skills Auton"
     };
 
@@ -284,7 +310,6 @@ void pre_auton(void) {
     Brain.Screen.setFont(mono60);
     Brain.Screen.printAt(50, 100, "Auton Selected:");
     Brain.Screen.printAt(50, 150, autonNames[currAuton].c_str());
-    wait(2, sec); // brief pause before auton starts
 }
 
 
@@ -309,8 +334,7 @@ void pre_auton(void) {
 /*---------------------------------------------------------------------------*/
 
 void autonomous(void) {
-    blueLeft();
-    /*switch(currAuton) {
+    switch(currAuton) {
         case 0: blueLeft(); break;
         case 1: redLeft(); break;
         case 2: blueRight(); break;
@@ -318,7 +342,7 @@ void autonomous(void) {
         case 4: skillsAuton(); break; // NEW AUTON
         default: break;
     }
-    */
+    
 }
 
 
@@ -409,13 +433,9 @@ void driveManager(){
     while(1) {
         int raw3 = controller1.Axis3.position();
         int raw1 = controller1.Axis1.position();
-        //ded zone
-        const int deadZone=5;
-        if(abs(raw3)<=deadZone) raw3=0;
-        if(abs(raw1)<=deadZone) raw1=0;
 
 
-        //logarithmic drive (127 signed int )
+        //logarithmic drive (127 signed int)
         double axis3 = 0.0;
         double axis1 = 0.0;
 
