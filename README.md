@@ -23,21 +23,21 @@ The project is organized for clean development, maintainability, and fast iterat
 
 Features
 
--Drivetrain Control: Six-motor drivetrain with proportional forward/reverse and precise turning using the inertial sensor.
+* Drivetrain Control: Six-motor drivetrain with proportional forward/reverse and precise turning using the inertial sensor.
 
--Intake System: Two-stage intake controlled via controller buttons, with forward/reverse and toggle functionality.
+* Intake System: Two-stage intake controlled via controller buttons, with forward/reverse and toggle functionality.
 
--Mechanisms: Wings, adjuster, and tongue actuators toggled independently using controller buttons.
+* Mechanisms: Wings, adjuster, and tongue actuators toggled independently using controller buttons.
 
--Autonomous Routines: Modular selectable routines via Brain touchscreen: Blue Left, Red Left, Blue Right, Red Right, and Skills Auton.
+* Autonomous Routines: Modular selectable routines via Brain touchscreen: Blue Left, Red Left, Blue Right, Red Right, and Skills Auton.
 
--Inertial Sensor Integration: Calibrated pre-match for accurate turning in autonomous.
+* Inertial Sensor Integration: Calibrated pre-match for accurate turning in autonomous.
 
--Driver Control: Smooth, logarithmic drive control with threaded managers for subsystems.
+* Driver Control: Smooth, logarithmic drive control with threaded managers for subsystems.
 
--Screen Feedback: Motor positions, autonomous selection, and debug info displayed on Brain screen.
+* Screen Feedback: Motor positions, autonomous selection, and debug info displayed on Brain screen.
 
--Modular Architecture: Threads for drive, intake, mechanisms, and logging for efficient asynchronous control.
+* Modular Architecture: Threads for drive, intake, mechanisms, and logging for efficient asynchronous control.
 
 
 ## Getting Started
