@@ -9,12 +9,18 @@ The project is organized for clean development, maintainability, and fast iterat
 
 ## 📁 Repository Structure
 /
-├── include/ # Header files (IDs, constants, helper utilities)
-├── src/ # Main C++ source (autonomous, driver control, tuning)
-├── vex/ # VEX project configuration and metadata
-├── makefile # Command-line build script
-├── .vscode/ # Optional VS Code configuration
-└── .gitignore # Ignored files
+├── include/ # Header files (IDs, constants, helper utilities)  
+
+├── src/ # Main C++ source (autonomous, driver control, tuning)  
+
+├── vex/ # VEX project configuration and metadata  
+
+├── makefile # Command-line build script  
+
+├── .vscode/ # Optional VS Code configuration  
+
+└── .gitignore # Ignored files  
+
 
 
 
@@ -24,16 +30,19 @@ The project is organized for clean development, maintainability, and fast iterat
 ```bash
 git clone https://github.com/Dragonix22/4610EPushBack.git
 cd 4610EPushBack
-2. Set Up Environment
+```
+
+###2. Set Up Environment
 Install the VEX V5 toolchain or use VEXcode Pro V5
 
 Recommended editor: VS Code with C++ extensions
 
-3. Build the Project
+###3. Build the Project
+```
 bash
-Copy code
 make
-4. Deploy to the Robot
+```
+###4. Deploy to the Robot
 Connect a VEX V5 brain
 
 
