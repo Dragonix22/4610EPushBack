@@ -21,7 +21,7 @@ The project is organized for clean development, maintainability, and fast iterat
 
 └── .gitignore # Ignored files  
 
-Features
+## Features
 
 * Drivetrain Control: Six-motor drivetrain with proportional forward/reverse and precise turning using the inertial sensor.
 
