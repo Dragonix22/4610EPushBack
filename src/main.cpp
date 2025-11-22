@@ -122,8 +122,8 @@ void turnLeftProp(double degreesTarget) {
 
     while (true) {
         double current = inert.rotation(degrees);
-        double error = -degreesTarget - current; // negative target for left
-        if (fabs(error) < 2) break; // stop in range
+        double error = -degreesTarget - current; 
+        if (fabs(error) < 2) break; 
 
         double speed = k_p * error;
         speed = std::min(std::max(speed, -100.0), 100.0);
@@ -151,7 +151,7 @@ void turnRightProp(double degreesTarget) {
     while (true) {
         double current = inert.rotation(degrees);
         double error = degreesTarget - current; 
-        if (fabs(error) < 2) break; // stop in range
+        if (fabs(error) < 2) break; 
 
         double speed = k_p * error;
         speed = std::min(std::max(speed, -100.0), 100.0);
@@ -228,63 +228,62 @@ void skillsAuton(){
 
 }
 
+void twoInchAuton(){
+    driveForwardProp(3);
+}
+
 void pre_auton(void) {
-    // Clear screen and set font
     Brain.Screen.clearScreen();
     Brain.Screen.setFont(mono60);
 
-    // Calibrate inertial
     inert.calibrate();
     Brain.Screen.printAt(5, 30, "Calibrating inertial...");
-    while(inert.isCalibrating()) wait(100, msec); // wait for calibration
+    while(inert.isCalibrating()) wait(100, msec); 
     Brain.Screen.clearScreen();
 
-    // Define auton names
-    const int NUM_AUTONS = 5;
+    const int NUM_AUTONS = 6;
     string autonNames[NUM_AUTONS] = {
         "Blue L",
         "Red L",
         "Blue R",
         "Red R",
-        "Skills Auton"
+        "Skills Auton",
+        "2 Inch"
     };
 
-    // Define button positions (x, y, width, height)
     struct Button { int x, y, w, h; };
     Button autonButtons[NUM_AUTONS] = {
         {270, 10, 80, 80},   // Blue Left
         {355, 10, 80, 80},   // Red Left
         {270, 95, 80, 80},   // Blue Right
         {355, 95, 80, 80},   // Red Right
-        {270, 180, 165, 80}  // Skills Auton (bigger button)
+        {270, 180, 120, 80},  // Skills Auton
+        {395, 180, 40,80}// 2 Inch
     };
 
     bool selected = false;
 
     while(!selected){
-        // Draw buttons dynamically
         for(int i=0; i<NUM_AUTONS; i++){
             if(i == 0 || i == 2) Brain.Screen.setFillColor(blue);
             else if(i == 1 || i == 3) Brain.Screen.setFillColor(red);
-            else Brain.Screen.setFillColor(green); // Skills auton
+            else Brain.Screen.setFillColor(green); 
 
             Brain.Screen.drawRectangle(autonButtons[i].x, autonButtons[i].y,
                                        autonButtons[i].w, autonButtons[i].h);
 
-            // Draw text
             Brain.Screen.setFillColor(black);
             Brain.Screen.setFont(mono30);
             Brain.Screen.printAt(autonButtons[i].x + 10, autonButtons[i].y + 50, autonNames[i].c_str());
         }
 
-        // Display currently selected auton
         Brain.Screen.setFillColor(black);
         Brain.Screen.setFont(mono30);
         Brain.Screen.printAt(5, 170, "SELECTED AUTON:");
-        Brain.Screen.printAt(5, 210, "                     "); // clear line
+        Brain.Screen.printAt(5, 210, "                     "); 
         Brain.Screen.printAt(5, 210, autonNames[currAuton].c_str());
 
-        // Check for screen touch
+
         if(Brain.Screen.pressing()){
             while(Brain.Screen.pressing()) wait(10,msec);
 
@@ -305,7 +304,7 @@ void pre_auton(void) {
         wait(50,msec);
     }
 
-    // Final confirmation
+
     Brain.Screen.clearScreen();
     Brain.Screen.setFont(mono60);
     Brain.Screen.printAt(50, 100, "Auton Selected:");
@@ -340,6 +339,7 @@ void autonomous(void) {
         case 2: blueRight(); break;
         case 3: redRight(); break;
         case 4: skillsAuton(); break; // NEW AUTON
+        case 5: twoInchAuton(); break; // AWP
         default: break;
     }
     
