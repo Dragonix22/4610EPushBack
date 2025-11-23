@@ -2,10 +2,10 @@
 /*----------------------------------------------------------------------------*/
 /*                                                                            */
 /*    Module:       main.cpp                                                  */
-/*    Author:       Student                                                   */
+/*    Author:       4610E                                                     */
 /*    Created:      9/21/2025, 10:24:47 AM                                    */
 /*    Description:  V5 project                                                */
-/*                /                                                            */
+/*                                                                            */
 /*----------------------------------------------------------------------------*/
 
 #include "vex.h"
@@ -34,13 +34,15 @@ digital_out tongue = digital_out(Brain.ThreeWirePort.C);
 bool wingState = false;
 bool adjustState = false;
 bool tongueState = false;
-inertial inert = inertial(PORT16);
+inertial inert = inertial(PORT8);
 bool autonStarted = false;
 int currAuton = 0;
 controller controller1 = controller();
 bool s1IntakeOn = false;
 bool s2IntakeOn=false;
 bumper aligner = bumper(Brain.ThreeWirePort.H);
+double k_p_drive = 0.5;
+double k_p_turn = 0.4;
 /*---------------------------------------------------------------------------*/
 /*                          Pre-Autonomous Functions                         */
 /*                                                                           */
@@ -55,7 +57,7 @@ bumper aligner = bumper(Brain.ThreeWirePort.H);
 double inchesToDegrees(double inches){
     const double PI = 3.14159265358979323;
     const double wheelDiamater = 3.25;
-    return(0.25*((inches*360.0)/(PI*wheelDiamater)));
+    return((inches*360.0)/(PI*wheelDiamater));
 }
 
 void driveForwardProp(double distance){
@@ -63,7 +65,7 @@ void driveForwardProp(double distance){
     leftFrontBottom.resetPosition();
     leftBack.resetPosition();
     double target = inchesToDegrees(distance);
-    double k_p = 0.5;
+    double k_p = k_p_drive;
     while(true){
         double position = leftFrontTop.position(degrees);
         double error = target - position;
@@ -92,7 +94,7 @@ void driveReverseProp(double distance){
     leftFrontBottom.resetPosition();
     leftBack.resetPosition();
     double target = -inchesToDegrees(distance);
-    double k_p = 0.5;
+    double k_p = k_p_drive;
     while(true){
         double position = leftFrontTop.position(degrees);
         double error = target - position;
@@ -119,35 +121,42 @@ void driveReverseProp(double distance){
 
 void turnLeftProp(double degreesTarget) {
     inert.resetRotation();
-    double k_p = 0.4;
+    double k_p = k_p_turn;
 
     while (true) {
         double current = inert.rotation(degrees);
-        double error = -degreesTarget - current; 
-        if (fabs(error) < 2) break; 
+        double target = -degreesTarget;
+        double error = target - current;
+
+        if (fabs(error) < 1.5) 
+            break;
 
         double speed = k_p * error;
         speed = std::min(std::max(speed, -100.0), 100.0);
 
-        leftFrontTop.spin(reverse, speed, percent);
-        leftFrontBottom.spin(reverse, speed, percent);
-        leftBack.spin(reverse, speed, percent);
-        rightFrontTop.spin(forward, speed, percent);
-        rightFrontBottom.spin(forward, speed, percent);
-        rightBack.spin(forward, speed, percent);
+        // Positive speed = turn left
+        leftFrontTop.spin(reverse, speed, pct);
+        leftFrontBottom.spin(reverse, speed, pct);
+        leftBack.spin(reverse, speed, pct);
+        rightFrontTop.spin(fwd, speed, pct);
+        rightFrontBottom.spin(fwd, speed, pct);
+        rightBack.spin(fwd, speed, pct);
+
+        wait(10, msec);
     }
 
-    leftFrontTop.stop(coast);
-    leftFrontBottom.stop(coast);
-    leftBack.stop(coast);
-    rightFrontTop.stop(coast);
-    rightFrontBottom.stop(coast);
-    rightBack.stop(coast);
-
+    // hold position to avoid drifting
+    leftFrontTop.stop(hold);
+    leftFrontBottom.stop(hold);
+    leftBack.stop(hold);
+    rightFrontTop.stop(hold);
+    rightFrontBottom.stop(hold);
+    rightBack.stop(hold);
 }
+
 void turnRightProp(double degreesTarget) {
     inert.resetRotation();
-    double k_p = 0.4;
+    double k_p = k_p_turn;
 
     while (true) {
         double current = inert.rotation(degrees);
@@ -231,25 +240,45 @@ void skillsAuton(){
     adjust.set(true);
     intakeStage1.spin(forward);
     driveForwardProp(32);
-    turnRightProp(60);
+    turnRightProp(135);
     driveForwardProp(48);
+
     turnRightProp(45);
     driveForwardProp(34);
     turnRightProp(45);
+
     driveForwardProp(24);
     driveReverseProp(48);
+
+    tongue.set(true);
     intakeStage2.spin(forward);
     wait(2,sec);
     intakeStage2.stop(hold);
+    tongue.set(false);
+
     turnRightProp(45);
     driveForwardProp(68);
     turnRightProp(135); 
-    driveForwardProp(2.5*24);
-    
+
+    driveForwardProp(24);
+    turnRightProp(30);
+    driveForwardProp(45);
+    turnLeftProp(100);
+    driveForwardProp(24);
+
+    tongue.set(true);
+    wait(2,sec);
+    tongue.set(false);
+    turnRightProp(20);
+    //sqrt((2.5*24)^2+(1.5*24)^2)=90.55
+    driveReverseProp(91);
+    adjust.set(false);
+    intakeStage2.spin(forward); 
 
 }
 
 void twoInchAuton(){
+    //turnLeftProp(90);
     driveForwardProp(3);
 }
 
