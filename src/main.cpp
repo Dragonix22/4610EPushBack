@@ -23,8 +23,8 @@ vex::brain Brain;
 motor leftFrontTop = motor(PORT1,false);
 motor leftFrontBottom = motor(PORT5,true);
 motor leftBack = motor(PORT11,true);
-motor rightFrontTop = motor(PORT13,true);
-motor rightFrontBottom = motor(PORT6,false);
+motor rightFrontTop = motor(PORT6,true);
+motor rightFrontBottom = motor(PORT10,false);
 motor rightBack = motor(PORT17,false);
 motor intakeStage1 = motor(PORT2,true);
 motor intakeStage2 = motor(PORT4,true);
@@ -40,6 +40,7 @@ int currAuton = 0;
 controller controller1 = controller();
 bool s1IntakeOn = false;
 bool s2IntakeOn=false;
+bumper aligner = bumper(Brain.ThreeWirePort.H);
 /*---------------------------------------------------------------------------*/
 /*                          Pre-Autonomous Functions                         */
 /*                                                                           */
@@ -223,8 +224,28 @@ void redRight(){
 void blueRight(){
 
 }
-
+//each tile is 24 inches
+//diagonal of tile is sqrt(24^2 + 24^2) = 33.94 inches
+//diagonal of two by 1 tile is sqrt(48^2 + 24^2) = 53.67 inches
 void skillsAuton(){
+    adjust.set(true);
+    intakeStage1.spin(forward);
+    driveForwardProp(32);
+    turnRightProp(60);
+    driveForwardProp(48);
+    turnRightProp(45);
+    driveForwardProp(34);
+    turnRightProp(45);
+    driveForwardProp(24);
+    driveReverseProp(48);
+    intakeStage2.spin(forward);
+    wait(2,sec);
+    intakeStage2.stop(hold);
+    turnRightProp(45);
+    driveForwardProp(68);
+    turnRightProp(135); 
+    driveForwardProp(2.5*24);
+    
 
 }
 
@@ -463,6 +484,11 @@ void motorDegreeManagers(){
 
     }
 }
+
+void alignerManager(){
+    controller1.rumble("._."); //._.
+}
+
 void usercontrol(void) {
     //Brain.Screen.printAt(5,30,"Driving");
     thread p(motorDegreeManagers);
@@ -472,15 +498,17 @@ void usercontrol(void) {
     thread d(driveManager);
     wings.set(false);
     adjust.set(false);
+    aligner.pressed(alignerManager);
+
     // User control code here, inside the loop
     //Brain.Screen.printAt(10,50,"not aadityas password: 264859");
     //Brain.Screen.printAt( 10, 50, "Aaditya's Password: 264 859" );
-    //while(1){
-
-    //}
+    //while(1){}
   
 
 }
+
+
 
 //
 // Main will set up the competition functions and callbacks.
