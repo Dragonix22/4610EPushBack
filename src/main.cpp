@@ -42,7 +42,7 @@ bool s1IntakeOn = false;
 bool s2IntakeOn=false;
 bumper aligner = bumper(Brain.ThreeWirePort.H);
 double k_p_drive = 0.5;
-double k_p_turn = 0.4;
+double k_p_turn = 1;
 /*---------------------------------------------------------------------------*/
 /*                          Pre-Autonomous Functions                         */
 /*                                                                           */
@@ -491,6 +491,9 @@ void driveManager(){
 
         if (raw3!=0) axis3=(raw3>0 ? 1.0: -1.0)*((raw3*raw3)/127.0);
         if (raw1!=0) axis1=(raw1>0 ? 1.0: -1.0)*((raw1*raw1)/127.0);
+
+        double turnBoost=1.5;
+        axis1*=turnBoost;
 
         leftBack.spin(forward, axis3 + axis1, pct);
         leftFrontBottom.spin(forward, axis3 + axis1, pct);
