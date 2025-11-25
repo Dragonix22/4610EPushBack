@@ -528,6 +528,7 @@ void usercontrol(void) {
     thread w(wingMananger);
     thread a(adjustMananger);
     thread d(driveManager);
+    thread t(tongueManager);
     wings.set(false);
     adjust.set(false);
     aligner.pressed(alignerManager);
