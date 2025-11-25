@@ -436,16 +436,23 @@ void adjustMananger(){
 }
 
 void tongueManager() {
+    bool tongueState = false;  
     while (true) {
+
         if (controller1.ButtonB.pressing()) {
-            tongue.set(true);
-        } else {
-            tongue.set(false);
+
+            while (controller1.ButtonB.pressing()) {
+                wait(5, msec);
+            }
+
+            tongueState = !tongueState;   
+            tongue.set(tongueState);    
         }
 
         wait(10, msec);
     }
 }
+
 
 void intakeManager(){
     s1IntakeOn = true;
