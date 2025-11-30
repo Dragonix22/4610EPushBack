@@ -278,8 +278,8 @@ void skillsAuton(){
 }
 
 void twoInchAuton(){
-    //turnLeftProp(90);
-    driveForwardProp(3);
+    turnLeftProp(90);
+    //driveForwardProp(3);
 }
 
 void pre_auton(void) {
