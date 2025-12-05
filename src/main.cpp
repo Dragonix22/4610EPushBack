@@ -34,7 +34,7 @@ digital_out tongue = digital_out(Brain.ThreeWirePort.C);
 bool wingState = false;
 bool adjustState = false;
 bool tongueState = false;
-inertial inert = inertial(PORT8);
+inertial inert = inertial(PORT21);
 bool autonStarted = false;
 int currAuton = 0;
 controller controller1 = controller();
@@ -42,7 +42,7 @@ bool s1IntakeOn = false;
 bool s2IntakeOn=false;
 bumper aligner = bumper(Brain.ThreeWirePort.H);
 double k_p_drive = 0.5;
-double k_p_turn = 1;
+double k_p_turn = 0.3;
 /*---------------------------------------------------------------------------*/
 /*                          Pre-Autonomous Functions                         */
 /*                                                                           */
@@ -66,49 +66,59 @@ void driveForwardProp(double distance){
     leftBack.resetPosition();
     double target = inchesToDegrees(distance);
     double k_p = k_p_drive;
-    while(true){
-        double position = leftFrontTop.position(degrees);
-        double error = target - position;
-        if (fabs(error) < 10) break; 
+    double position = leftFrontTop.position(degrees);
+    double error = target - position;
+
+    while(true) { //fabs(error)>10){
+        position = leftFrontTop.position(degrees);
+        error = target - position;
 
         double speed = k_p * error;
-        speed = std::min(std::max(speed, -100.0), 100.0);
+        //speed = std::min(std::max(speed, -100.0), 100.0);
 
+        speed = 100;
         leftFrontTop.spin(forward,speed,percent);
         leftFrontBottom.spin(forward,speed,percent);
         leftBack.spin(forward,speed,percent);
         rightFrontTop.spin(forward,speed,percent);
         rightFrontBottom.spin(forward,speed,percent);
         rightBack.spin(forward,speed,percent);
+
+        wait(20,msec);
     }
+    /*
     leftFrontTop.stop(hold);
     leftFrontBottom.stop(hold);
     leftBack.stop(hold);
     rightFrontTop.stop(hold);
     rightFrontBottom.stop(hold);
     rightBack.stop(hold);
+    */
 }
 
 void driveReverseProp(double distance){
     leftFrontTop.resetPosition();
     leftFrontBottom.resetPosition();
     leftBack.resetPosition();
-    double target = -inchesToDegrees(distance);
+    double target = inchesToDegrees(distance);
     double k_p = k_p_drive;
-    while(true){
-        double position = leftFrontTop.position(degrees);
-        double error = target - position;
-        if (fabs(error) < 10) break; 
+
+    double position = leftFrontTop.position(degrees);
+    double error = target + position;
+
+    while(fabs(error)>10){
+        position = leftFrontTop.position(degrees);
+        error = target - position;
 
         double speed = k_p * error;
-        speed = std::min(std::max(speed, -100.0), 100.0);
+        //speed = std::min(std::max(speed, -100.0), 100.0);
 
-        leftFrontTop.spin(forward,speed,percent);
-        leftFrontBottom.spin(forward,speed,percent);
-        leftBack.spin(forward,speed,percent);
-        rightFrontTop.spin(forward,speed,percent);
-        rightFrontBottom.spin(forward,speed,percent);
-        rightBack.spin(forward,speed,percent);
+        leftFrontTop.spin(reverse,speed,percent);
+        leftFrontBottom.spin(reverse,speed,percent);
+        leftBack.spin(reverse,speed,percent);
+        rightFrontTop.spin(reverse,speed,percent);
+        rightFrontBottom.spin(reverse,speed,percent);
+        rightBack.spin(reverse,speed,percent);
     }
     leftFrontTop.stop(hold);
     leftFrontBottom.stop(hold);
@@ -123,29 +133,29 @@ void turnLeftProp(double degreesTarget) {
     inert.resetRotation();
     double k_p = k_p_turn;
 
-    while (true) {
-        double current = inert.rotation(degrees);
-        double target = -degreesTarget;
-        double error = target - current;
+    double current = inert.rotation(degrees);
+    double error = degreesTarget - current;
 
-        if (fabs(error) < 1.5) 
-            break;
+    while (fabs(error)>2) {
+        Brain.Screen.printAt(30,30,"Err: %f", error);
+        current = inert.rotation(degrees);
+        error = degreesTarget + current;
 
         double speed = k_p * error;
-        speed = std::min(std::max(speed, -100.0), 100.0);
+        Brain.Screen.printAt(30,50,"Spd: %f", speed);
 
-        // Positive speed = turn left
+        //speed = std::min(std::max(speed, -100.0), 100.0);
+
         leftFrontTop.spin(reverse, speed, pct);
         leftFrontBottom.spin(reverse, speed, pct);
         leftBack.spin(reverse, speed, pct);
-        rightFrontTop.spin(fwd, speed, pct);
-        rightFrontBottom.spin(fwd, speed, pct);
-        rightBack.spin(fwd, speed, pct);
+        rightFrontTop.spin(forward, speed, pct);
+        rightFrontBottom.spin(forward, speed, pct);
+        rightBack.spin(forward, speed, pct);
 
         wait(10, msec);
     }
 
-    // hold position to avoid drifting
     leftFrontTop.stop(hold);
     leftFrontBottom.stop(hold);
     leftBack.stop(hold);
@@ -158,13 +168,16 @@ void turnRightProp(double degreesTarget) {
     inert.resetRotation();
     double k_p = k_p_turn;
 
-    while (true) {
-        double current = inert.rotation(degrees);
-        double error = degreesTarget - current; 
-        if (fabs(error) < 2) break; 
+    double current = inert.rotation(degrees);
+    double error = degreesTarget - current; 
 
-        double speed = k_p * error;
-        speed = std::min(std::max(speed, -100.0), 100.0);
+    while (fabs(error)>2) {
+        Brain.Screen.printAt(30,30,"Err: %f", error);
+        current = inert.rotation(degrees);
+        error = degreesTarget - current; 
+
+        double speed = k_p * error+1;
+        //speed = std::min(std::max(speed, -100.0), 100.0);
 
         leftFrontTop.spin(forward, speed, percent);
         leftFrontBottom.spin(forward, speed, percent);
@@ -172,14 +185,15 @@ void turnRightProp(double degreesTarget) {
         rightFrontTop.spin(reverse, speed, percent);
         rightFrontBottom.spin(reverse, speed, percent);
         rightBack.spin(reverse, speed, percent);
+        wait(10,msec);
     }
 
-    leftFrontTop.stop(coast);
-    leftFrontBottom.stop(coast);
-    leftBack.stop(coast);
-    rightFrontTop.stop(coast);
-    rightFrontBottom.stop(coast);
-    rightBack.stop(coast);
+    leftFrontTop.stop(hold);
+    leftFrontBottom.stop(hold);
+    leftBack.stop(hold);
+    rightFrontTop.stop(hold);
+    rightFrontBottom.stop(hold);
+    rightBack.stop(hold);
 
 }
 
@@ -210,9 +224,11 @@ void blueLeft(){
 
 }
 void redRight(){
+    tongue.set(false);
     adjust.set(true);    
     intakeStage1.spin(forward);
     driveForwardProp(32);
+    /*
     turnLeftProp(60);    
     driveForwardProp(16);
     intakeStage2.spin(forward);
@@ -227,11 +243,13 @@ void redRight(){
     adjust.set(true);
     driveReverseProp(40);
     intakeStage2.spin(forward);
-}
+    */
+
+    }
 
 
 void blueRight(){
-
+    redRight();
 }
 //each tile is 24 inches
 //diagonal of tile is sqrt(24^2 + 24^2) = 33.94 inches
@@ -278,8 +296,7 @@ void skillsAuton(){
 }
 
 void twoInchAuton(){
-    turnLeftProp(90);
-    //driveForwardProp(3);
+    driveForwardProp(10);
 }
 
 void pre_auton(void) {
@@ -529,7 +546,7 @@ void alignerManager(){
 
 void usercontrol(void) {
     //Brain.Screen.printAt(5,30,"Driving");
-    thread p(motorDegreeManagers);
+    //thread p(motorDegreeManagers);
     thread i(intakeManager);
     thread w(wingMananger);
     thread a(adjustMananger);
