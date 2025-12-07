@@ -1,5 +1,5 @@
 # 4610EPushBack 2025-26
-**Team 4610E 2025-26 Robot Revolution — Push Back Robot Codebase**
+Team 4610E 2025-26 Robot Revolution — Push Back Robot Codebase
 
 ## Overview
 This repository contains the source code, header files, and build configuration for **Team 4610E’s robot** competing in the **VEX V5 Robotics Competition: Push Back** season.
@@ -7,7 +7,7 @@ This repository contains the source code, header files, and build configuration 
 The project is organized for clean development, maintainability, and fast iteration during the season.
 
 
-## 📁 Repository Structure
+## Repository Structure
 /
 ├── include/ # Header files (IDs, constants, helper utilities)  
 
