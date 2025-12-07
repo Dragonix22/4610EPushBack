@@ -28,7 +28,7 @@ motor rightFrontBottom = motor(PORT10,false);
 motor rightBack = motor(PORT17,false);
 motor intakeStage1 = motor(PORT2,true);
 motor intakeStage2 = motor(PORT4,true);
-digital_out wings = digital_out(Brain.ThreeWirePort.A);
+digital_out wing = digital_out(Brain.ThreeWirePort.A);
 digital_out adjust = digital_out(Brain.ThreeWirePort.B);
 digital_out tongue = digital_out(Brain.ThreeWirePort.C);
 bool wingState = false;
@@ -69,14 +69,13 @@ void driveForwardProp(double distance){
     double position = leftFrontTop.position(degrees);
     double error = target - position;
 
-    while(true) { //fabs(error)>10){
+    while(fabs(error)>10){
         position = leftFrontTop.position(degrees);
         error = target - position;
 
         double speed = k_p * error;
         //speed = std::min(std::max(speed, -100.0), 100.0);
 
-        speed = 100;
         leftFrontTop.spin(forward,speed,percent);
         leftFrontBottom.spin(forward,speed,percent);
         leftBack.spin(forward,speed,percent);
@@ -84,16 +83,16 @@ void driveForwardProp(double distance){
         rightFrontBottom.spin(forward,speed,percent);
         rightBack.spin(forward,speed,percent);
 
-        wait(20,msec);
+        wait(10,msec);
     }
-    /*
+    
     leftFrontTop.stop(hold);
     leftFrontBottom.stop(hold);
     leftBack.stop(hold);
     rightFrontTop.stop(hold);
     rightFrontBottom.stop(hold);
     rightBack.stop(hold);
-    */
+    
 }
 
 void driveReverseProp(double distance){
@@ -119,6 +118,8 @@ void driveReverseProp(double distance){
         rightFrontTop.spin(reverse,speed,percent);
         rightFrontBottom.spin(reverse,speed,percent);
         rightBack.spin(reverse,speed,percent);
+        wait(10, msec);
+
     }
     leftFrontTop.stop(hold);
     leftFrontBottom.stop(hold);
@@ -218,17 +219,14 @@ void redLeft(){
 }
 
 void blueLeft(){
-   //driveForwardProp(4);
-   //driveReverseProp(4);
-
-
+    redLeft();
 }
 void redRight(){
     tongue.set(false);
     adjust.set(true);    
     intakeStage1.spin(forward);
     driveForwardProp(32);
-    /*
+    
     turnLeftProp(60);    
     driveForwardProp(16);
     intakeStage2.spin(forward);
@@ -243,8 +241,6 @@ void redRight(){
     adjust.set(true);
     driveReverseProp(40);
     intakeStage2.spin(forward);
-    */
-
     }
 
 
@@ -296,10 +292,13 @@ void skillsAuton(){
 }
 
 void twoInchAuton(){
-    driveForwardProp(10);
+    driveForwardProp(2);
 }
 
 void pre_auton(void) {
+    tongue.set(true);
+    wing.set(true);
+    adjust.set(true);
     Brain.Screen.clearScreen();
     Brain.Screen.setFont(mono60);
 
@@ -435,7 +434,7 @@ void wingMananger(){
             }
             wingState=!wingState;
         }
-        wings.set(wingState);
+        wing.set(wingState);
     }
 }
 
@@ -552,7 +551,7 @@ void usercontrol(void) {
     thread a(adjustMananger);
     thread d(driveManager);
     thread t(tongueManager);
-    wings.set(false);
+    wing.set(false);
     adjust.set(false);
     aligner.pressed(alignerManager);
 
