@@ -2,13 +2,13 @@
 Team 4610E 2025-26 Robot Revolution — Push Back Robot Codebase
 
 ## Overview
-This repository contains the source code, header files, and build configuration for **Team 4610E’s robot** competing in the **VEX V5 Robotics Competition: Push Back** season.
+This repository contains the source code, header files, and build configuration for Team 4610E’s robot competing in the VEX V5 Robotics Competition: Push Back season.
 
 The project is organized for clean development, maintainability, and fast iteration during the season.
 
 
 ## Repository Structure
-/
+
 ├── include/ # Header files (IDs, constants, helper utilities)  
 
 ├── src/ # Main C++ source (autonomous, driver control, tuning)  
@@ -29,9 +29,9 @@ The project is organized for clean development, maintainability, and fast iterat
 
 * Mechanisms: Wings, adjuster, and tongue actuators toggled independently using controller buttons.
 
-* Autonomous Routines: Modular selectable routines via Brain touchscreen: Blue Left, Red Left, Blue Right, Red Right, and Skills Auton.
+ Autonomous Routines: Modular selectable routines via Brain touchscreen: Blue Left, Red Left, Blue Right, Red Right, and Skills Auton.
 
-* Inertial Sensor Integration: Calibrated pre-match for accurate turning in autonomous.
+ Inertial Sensor Integration: Calibrated pre-match for accurate turning in autonomous.
 
 * Driver Control: Smooth, logarithmic drive control with threaded managers for subsystems.
 
