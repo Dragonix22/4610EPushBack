@@ -200,55 +200,6 @@ void turnRightProp(double degreesTarget) {
 
 }
 
-void redLeft(){
-    adjust.set(true);    
-    intakeStage1.spin(forward);
-    driveForwardProp(32);
-    turnRightProp(60);    
-    driveForwardProp(16);
-    intakeStage2.spin(forward);
-    wait(2,sec);
-    intakeStage2.stop(hold);
-    driveReverseProp(60);
-    turnRightProp(135);
-    driveForwardProp(20);
-    tongue.set(true);
-    wait(2,sec);
-    tongue.set(false);
-    adjust.set(true);
-    driveReverseProp(40);
-    intakeStage2.spin(forward);
-}
-
-void blueLeft(){
-    redLeft();
-}
-void redRight(){
-    tongue.set(false);
-    adjust.set(true);    
-    intakeStage1.spin(forward);
-    driveForwardProp(32);
-    
-    turnLeftProp(60);    
-    driveForwardProp(16);
-    intakeStage2.spin(forward);
-    wait(2,sec);
-    intakeStage2.stop(hold);
-    driveReverseProp(60);
-    turnLeftProp(135);
-    driveForwardProp(20);
-    tongue.set(true);
-    wait(2,sec);
-    tongue.set(false);
-    adjust.set(true);
-    driveReverseProp(40);
-    intakeStage2.spin(forward);
-    }
-
-
-void blueRight(){
-    redRight();
-}
 //each tile is 24 inches
 //diagonal of tile is sqrt(24^2 + 24^2) = 33.94 inches
 //diagonal of two by 1 tile is sqrt(48^2 + 24^2) = 53.67 inches
@@ -276,6 +227,10 @@ void skillsAuton(){
 
 }
 
+
+void soloAWP(){
+
+}
 
 
 
@@ -322,7 +277,7 @@ void skillsAuton(){
 
 }
 */
-void twoInchAuton(){
+void debug(){
     driveForwardProp(2);
 }
 
@@ -338,33 +293,27 @@ void pre_auton(void) {
     while(inert.isCalibrating()) wait(100, msec); 
     Brain.Screen.clearScreen();
 
-    const int NUM_AUTONS = 6;
+    const int NUM_AUTONS = 3;
     string autonNames[NUM_AUTONS] = {
-        "Blue L",
-        "Red L",
-        "Blue R",
-        "Red R",
         "Skills Auton",
-        "2 Inch"
+        "Debug",
+        "solo AWP"
     };
 
     struct Button { int x, y, w, h; };
     Button autonButtons[NUM_AUTONS] = {
-        {270, 10, 80, 80},   // Blue Left
-        {355, 10, 80, 80},   // Red Left
-        {270, 95, 80, 80},   // Blue Right
-        {355, 95, 80, 80},   // Red Right
-        {270, 180, 120, 80},  // Skills Auton
-        {395, 180, 40,80}// 2 Inch
+        {270, 10, 80, 80},   // Skills
+        {355, 10, 80, 80},   // Debug
+        {270, 95, 80, 80}//,   // Solo AWP
+        //{355, 95, 80, 80},   // Red Right
+
     };
 
     bool selected = false;
 
     while(!selected){
         for(int i=0; i<NUM_AUTONS; i++){
-            if(i == 0 || i == 2) Brain.Screen.setFillColor(blue);
-            else if(i == 1 || i == 3) Brain.Screen.setFillColor(red);
-            else Brain.Screen.setFillColor(green); 
+            Brain.Screen.setFillColor(blue);
 
             Brain.Screen.drawRectangle(autonButtons[i].x, autonButtons[i].y,
                                        autonButtons[i].w, autonButtons[i].h);
@@ -428,20 +377,24 @@ void pre_auton(void) {
 /*                                                                           */
 /*  You must modify the code to add your own robot specific commands here.   */
 /*---------------------------------------------------------------------------*/
+//override auton to always run 1 auton for debug purposes
+void autonomous(void) {
+    skillsAuton();
+}
 
+
+/*
 void autonomous(void) {
     switch(currAuton) {
-        case 0: blueLeft(); break;
-        case 1: redLeft(); break;
-        case 2: blueRight(); break;
-        case 3: redRight(); break;
-        case 4: skillsAuton(); break; // NEW AUTON
-        case 5: twoInchAuton(); break; // AWP
+        case 0: skillsAuton(); break;
+        case 1: debug(); break;
+        case 2: soloAWP(); break;
         default: break;
     }
     
 }
 
+*/
 
 /*---------------------------------------------------------------------------*/
 /*                                                                           */
@@ -541,8 +494,8 @@ void intakeManager(){
 
 
 double logDrive(double raw){
-    if(abs(raw)<10) return 0.0;
-    double x = abs(raw)/127.0;
+    if(fabs(raw)<10) return 0.0;
+    double x = fabs(raw)/127.0;
     double scaled = log10(1+9*x);
     return (raw>0 ? 1.0 : -1.0)*scaled*127.0;
 }

@@ -9,10 +9,12 @@
 		"creationDate": "11/16/2025, 10:17:17 AM",
 		"platform": "V5",
 		"language": "cpp",
-		"slot": 1,
+		"slot": 2,
 		"sdkVersion": "V5_20240802_15_00_00",
 		"cpp": {
-			"includePath": [],
+			"includePath": [
+				"/Applications/VEXcode/sdk/v5/**"
+			],
 			"printf_float": true
 		}
 	}
