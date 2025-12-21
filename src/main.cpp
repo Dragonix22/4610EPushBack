@@ -250,6 +250,21 @@ void blueRight(){
 //each tile is 24 inches
 //diagonal of tile is sqrt(24^2 + 24^2) = 33.94 inches
 //diagonal of two by 1 tile is sqrt(48^2 + 24^2) = 53.67 inches
+//robot db length is 15 inches
+
+//simple skills auto
+void emptyLoader(){
+
+}
+void skillAuton(){
+    tongue.set(false);
+    adjust.set(true);
+    intakeStage1.spin(forward);
+    driveForwardProp(10);
+}
+
+//prev skills auton
+/*
 void skillsAuton(){
     adjust.set(true);
     intakeStage1.spin(forward);
@@ -290,7 +305,7 @@ void skillsAuton(){
     intakeStage2.spin(forward); 
 
 }
-
+*/
 void twoInchAuton(){
     driveForwardProp(2);
 }
