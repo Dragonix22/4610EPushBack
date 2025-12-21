@@ -57,7 +57,7 @@ double k_p_turn = 0.3;
 double inchesToDegrees(double inches){
     printf("Inches: %f\n", inches);
     const double PI = 3.14159265358979323;
-    const double wheelDiamater = 3.25;
+    const double wheelDiamater = 3;
     printf("%f",(inches*360.0)/(PI*wheelDiamater));
     return (inches*360.0)/(PI*wheelDiamater);
 }
@@ -211,7 +211,8 @@ void skillsAuton(){
     tongue.set(false);
     adjust.set(true);
     intakeStage1.spin(forward);
-    driveForwardProp(10);
+    driveForwardProp(5);
+    /*
     turnRightProp(90);
     tongue.set(true);
     intakeStage1.spin(forward);
@@ -224,6 +225,7 @@ void skillsAuton(){
     adjust.set(false);
     driveForwardProp(5);
     turnRightProp(90);
+    */
 
 }
 
