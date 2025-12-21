@@ -55,9 +55,11 @@ double k_p_turn = 0.3;
 
 
 double inchesToDegrees(double inches){
+    printf("Inches: %f\n", inches);
     const double PI = 3.14159265358979323;
     const double wheelDiamater = 3.25;
-    return((inches*360.0)/(PI*wheelDiamater));
+    printf("%f",(inches*360.0)/(PI*wheelDiamater));
+    return (inches*360.0)/(PI*wheelDiamater);
 }
 
 void driveForwardProp(double distance){
@@ -253,15 +255,29 @@ void blueRight(){
 //robot db length is 15 inches
 
 //simple skills auto
-void emptyLoader(){
 
-}
-void skillAuton(){
+void skillsAuton(){
     tongue.set(false);
     adjust.set(true);
     intakeStage1.spin(forward);
     driveForwardProp(10);
+    turnRightProp(90);
+    tongue.set(true);
+    intakeStage1.spin(forward);
+    driveForwardProp(5);
+    wait(2,sec);
+    driveReverseProp(10);
+    adjust.set(true);
+    intakeStage2.spin(forward);
+    wait(2,sec);
+    adjust.set(false);
+    driveForwardProp(5);
+    turnRightProp(90);
+
 }
+
+
+
 
 //prev skills auton
 /*
@@ -513,7 +529,22 @@ void intakeManager(){
             intakeStage2.stop();
         }
 
+
+
+
+
+
+
+
     }
+}
+
+
+double logDrive(double raw){
+    if(abs(raw)<10) return 0.0;
+    double x = abs(raw)/127.0;
+    double scaled = log10(1+9*x);
+    return (raw>0 ? 1.0 : -1.0)*scaled*127.0;
 }
 
 void driveManager(){
@@ -522,12 +553,8 @@ void driveManager(){
         int raw1 = controller1.Axis1.position();
 
 
-        //logarithmic drive (127 signed int)
-        double axis3 = 0.0;
-        double axis1 = 0.0;
-
-        if (raw3!=0) axis3=(raw3>0 ? 1.0: -1.0)*((raw3*raw3)/127.0);
-        if (raw1!=0) axis1=(raw1>0 ? 1.0: -1.0)*((raw1*raw1)/127.0);
+        double axis3 = logDrive(raw3);
+        double axis1 = logDrive(raw1);
 
         double turnBoost=1.5;
         axis1*=turnBoost;

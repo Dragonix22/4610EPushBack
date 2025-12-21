@@ -1,0 +1,625 @@
+
+/*----------------------------------------------------------------------------*/
+/*                                                                            */
+/*    Module:       main.cpp                                                  */
+/*    Author:       4610E                                                     */
+/*    Created:      9/21/2025, 10:24:47 AM                                    */
+/*    Description:  V5 project                                                */
+/*                                                                            */
+/*----------------------------------------------------------------------------*/
+
+#include "vex.h"
+#include <cmath>
+#include <string>
+#include <algorithm>
+
+using namespace vex;
+using std::string;
+// A global instance of competition
+competition Competition;
+vex::brain Brain;
+
+// define your global instances of motors and other devices here
+motor leftFrontTop = motor(PORT1,false);
+motor leftFrontBottom = motor(PORT5,true);
+motor leftBack = motor(PORT11,true);
+motor rightFrontTop = motor(PORT6,true);
+motor rightFrontBottom = motor(PORT10,false);
+motor rightBack = motor(PORT17,false);
+motor intakeStage1 = motor(PORT2,true);
+motor intakeStage2 = motor(PORT4,true);
+digital_out wing = digital_out(Brain.ThreeWirePort.A);
+digital_out adjust = digital_out(Brain.ThreeWirePort.B);
+digital_out tongue = digital_out(Brain.ThreeWirePort.C);
+bool wingState = false;
+bool adjustState = false;
+bool tongueState = false;
+inertial inert = inertial(PORT21);
+bool autonStarted = false;
+int currAuton = 0;
+controller controller1 = controller();
+bool s1IntakeOn = false;
+bool s2IntakeOn=false;
+bumper aligner = bumper(Brain.ThreeWirePort.H);
+double k_p_drive = 0.5;
+double k_p_turn = 0.3;
+/*---------------------------------------------------------------------------*/
+/*                          Pre-Autonomous Functions                         */
+/*                                                                           */
+/*  You may want to perform some actions before the competition starts.      */
+/*  Do them in the following function.  You must return from this function   */
+/*  or the autonomous and usercontrol tasks will not be started.  This       */
+/*  function is only called once after the V5 has been powered on and        */
+/*  not every time that the robot is disabled.                               */
+/*---------------------------------------------------------------------------*/
+
+
+double inchesToDegrees(double inches){
+    printf("Inches: %f\n", inches);
+    const double PI = 3.14159265358979323;
+    const double wheelDiamater = 3.25;
+    printf("%f",(inches*360.0)/(PI*wheelDiamater));
+    return (inches*360.0)/(PI*wheelDiamater);
+}
+
+void driveForwardProp(double distance){
+    leftFrontTop.resetPosition();
+    leftFrontBottom.resetPosition();
+    leftBack.resetPosition();
+    double target = inchesToDegrees(distance);
+    double k_p = k_p_drive;
+    double position = leftFrontTop.position(degrees);
+    double error = target - position;
+
+    while(fabs(error)>10){
+        position = leftFrontTop.position(degrees);
+        error = target - position;
+
+        double speed = k_p * error;
+        //speed = std::min(std::max(speed, -100.0), 100.0);
+
+        leftFrontTop.spin(forward,speed,percent);
+        leftFrontBottom.spin(forward,speed,percent);
+        leftBack.spin(forward,speed,percent);
+        rightFrontTop.spin(forward,speed,percent);
+        rightFrontBottom.spin(forward,speed,percent);
+        rightBack.spin(forward,speed,percent);
+
+        wait(10,msec);
+    }
+    
+    leftFrontTop.stop(hold);
+    leftFrontBottom.stop(hold);
+    leftBack.stop(hold);
+    rightFrontTop.stop(hold);
+    rightFrontBottom.stop(hold);
+    rightBack.stop(hold);
+    
+}
+
+void driveReverseProp(double distance){
+    leftFrontTop.resetPosition();
+    leftFrontBottom.resetPosition();
+    leftBack.resetPosition();
+    double target = inchesToDegrees(distance);
+    double k_p = k_p_drive;
+
+    double position = leftFrontTop.position(degrees);
+    double error = target + position;
+
+    while(fabs(error)>10){
+        position = leftFrontTop.position(degrees);
+        error = target - position;
+
+        double speed = k_p * error;
+        //speed = std::min(std::max(speed, -100.0), 100.0);
+
+        leftFrontTop.spin(reverse,speed,percent);
+        leftFrontBottom.spin(reverse,speed,percent);
+        leftBack.spin(reverse,speed,percent);
+        rightFrontTop.spin(reverse,speed,percent);
+        rightFrontBottom.spin(reverse,speed,percent);
+        rightBack.spin(reverse,speed,percent);
+        wait(10, msec);
+
+    }
+    leftFrontTop.stop(hold);
+    leftFrontBottom.stop(hold);
+    leftBack.stop(hold);
+    rightFrontTop.stop(hold);
+    rightFrontBottom.stop(hold);
+    rightBack.stop(hold);
+}
+
+
+void turnLeftProp(double degreesTarget) {
+    inert.resetRotation();
+    double k_p = k_p_turn;
+
+    double current = inert.rotation(degrees);
+    double error = degreesTarget - current;
+
+    while (fabs(error)>2) {
+        Brain.Screen.printAt(30,30,"Err: %f", error);
+        current = inert.rotation(degrees);
+        error = degreesTarget + current;
+
+        double speed = k_p * error;
+        Brain.Screen.printAt(30,50,"Spd: %f", speed);
+
+        //speed = std::min(std::max(speed, -100.0), 100.0);
+
+        leftFrontTop.spin(reverse, speed, pct);
+        leftFrontBottom.spin(reverse, speed, pct);
+        leftBack.spin(reverse, speed, pct);
+        rightFrontTop.spin(forward, speed, pct);
+        rightFrontBottom.spin(forward, speed, pct);
+        rightBack.spin(forward, speed, pct);
+
+        wait(10, msec);
+    }
+
+    leftFrontTop.stop(hold);
+    leftFrontBottom.stop(hold);
+    leftBack.stop(hold);
+    rightFrontTop.stop(hold);
+    rightFrontBottom.stop(hold);
+    rightBack.stop(hold);
+}
+
+void turnRightProp(double degreesTarget) {
+    inert.resetRotation();
+    double k_p = k_p_turn;
+
+    double current = inert.rotation(degrees);
+    double error = degreesTarget - current; 
+
+    while (fabs(error)>2) {
+        Brain.Screen.printAt(30,30,"Err: %f", error);
+        current = inert.rotation(degrees);
+        error = degreesTarget - current; 
+
+        double speed = k_p * error+1;
+        //speed = std::min(std::max(speed, -100.0), 100.0);
+
+        leftFrontTop.spin(forward, speed, percent);
+        leftFrontBottom.spin(forward, speed, percent);
+        leftBack.spin(forward, speed, percent);
+        rightFrontTop.spin(reverse, speed, percent);
+        rightFrontBottom.spin(reverse, speed, percent);
+        rightBack.spin(reverse, speed, percent);
+        wait(10,msec);
+    }
+
+    leftFrontTop.stop(hold);
+    leftFrontBottom.stop(hold);
+    leftBack.stop(hold);
+    rightFrontTop.stop(hold);
+    rightFrontBottom.stop(hold);
+    rightBack.stop(hold);
+
+}
+
+void redLeft(){
+    adjust.set(true);    
+    intakeStage1.spin(forward);
+    driveForwardProp(32);
+    turnRightProp(60);    
+    driveForwardProp(16);
+    intakeStage2.spin(forward);
+    wait(2,sec);
+    intakeStage2.stop(hold);
+    driveReverseProp(60);
+    turnRightProp(135);
+    driveForwardProp(20);
+    tongue.set(true);
+    wait(2,sec);
+    tongue.set(false);
+    adjust.set(true);
+    driveReverseProp(40);
+    intakeStage2.spin(forward);
+}
+
+void blueLeft(){
+    redLeft();
+}
+void redRight(){
+    tongue.set(false);
+    adjust.set(true);    
+    intakeStage1.spin(forward);
+    driveForwardProp(32);
+    
+    turnLeftProp(60);    
+    driveForwardProp(16);
+    intakeStage2.spin(forward);
+    wait(2,sec);
+    intakeStage2.stop(hold);
+    driveReverseProp(60);
+    turnLeftProp(135);
+    driveForwardProp(20);
+    tongue.set(true);
+    wait(2,sec);
+    tongue.set(false);
+    adjust.set(true);
+    driveReverseProp(40);
+    intakeStage2.spin(forward);
+    }
+
+
+void blueRight(){
+    redRight();
+}
+//each tile is 24 inches
+//diagonal of tile is sqrt(24^2 + 24^2) = 33.94 inches
+//diagonal of two by 1 tile is sqrt(48^2 + 24^2) = 53.67 inches
+//robot db length is 15 inches
+
+//simple skills auto
+
+void skillsAuton(){
+    tongue.set(false);
+    adjust.set(true);
+    intakeStage1.spin(forward);
+    driveForwardProp(10);
+    turnRightProp(90);
+    tongue.set(true);
+    intakeStage1.spin(forward);
+    driveForwardProp(5);
+    wait(2,sec);
+    driveReverseProp(10);
+    adjust.set(true);
+    intakeStage2.spin(forward);
+    wait(2,sec);
+    adjust.set(false);
+    driveForwardProp(5);
+    turnRightProp(90);
+
+}
+
+
+
+
+//prev skills auton
+/*
+void skillsAuton(){
+    adjust.set(true);
+    intakeStage1.spin(forward);
+    driveForwardProp(32);
+    turnRightProp(135);
+    driveForwardProp(48);
+
+    turnRightProp(45);
+    driveForwardProp(34);
+    turnRightProp(45);
+
+    driveForwardProp(24);
+    driveReverseProp(48);
+
+    tongue.set(true);
+    intakeStage2.spin(forward);
+    wait(2,sec);
+    intakeStage2.stop(hold);
+    tongue.set(false);
+
+    turnRightProp(45);
+    driveForwardProp(68);
+    turnRightProp(135); 
+
+    driveForwardProp(24);
+    turnRightProp(30);
+    driveForwardProp(45);
+    turnLeftProp(100);
+    driveForwardProp(24);
+
+    tongue.set(true);
+    wait(2,sec);
+    tongue.set(false);
+    turnRightProp(20);
+    //sqrt((2.5*24)^2+(1.5*24)^2)=90.55
+    driveReverseProp(91);
+    adjust.set(false);
+    intakeStage2.spin(forward); 
+
+}
+*/
+void twoInchAuton(){
+    driveForwardProp(2);
+}
+
+void pre_auton(void) {
+    tongue.set(true);
+    wing.set(true);
+    adjust.set(true);
+    Brain.Screen.clearScreen();
+    Brain.Screen.setFont(mono60);
+
+    inert.calibrate();
+    Brain.Screen.printAt(5, 30, "Calibrating inertial...");
+    while(inert.isCalibrating()) wait(100, msec); 
+    Brain.Screen.clearScreen();
+
+    const int NUM_AUTONS = 6;
+    string autonNames[NUM_AUTONS] = {
+        "Blue L",
+        "Red L",
+        "Blue R",
+        "Red R",
+        "Skills Auton",
+        "2 Inch"
+    };
+
+    struct Button { int x, y, w, h; };
+    Button autonButtons[NUM_AUTONS] = {
+        {270, 10, 80, 80},   // Blue Left
+        {355, 10, 80, 80},   // Red Left
+        {270, 95, 80, 80},   // Blue Right
+        {355, 95, 80, 80},   // Red Right
+        {270, 180, 120, 80},  // Skills Auton
+        {395, 180, 40,80}// 2 Inch
+    };
+
+    bool selected = false;
+
+    while(!selected){
+        for(int i=0; i<NUM_AUTONS; i++){
+            if(i == 0 || i == 2) Brain.Screen.setFillColor(blue);
+            else if(i == 1 || i == 3) Brain.Screen.setFillColor(red);
+            else Brain.Screen.setFillColor(green); 
+
+            Brain.Screen.drawRectangle(autonButtons[i].x, autonButtons[i].y,
+                                       autonButtons[i].w, autonButtons[i].h);
+
+            Brain.Screen.setFillColor(black);
+            Brain.Screen.setFont(mono30);
+            Brain.Screen.printAt(autonButtons[i].x + 10, autonButtons[i].y + 50, autonNames[i].c_str());
+        }
+
+        Brain.Screen.setFillColor(black);
+        Brain.Screen.setFont(mono30);
+        Brain.Screen.printAt(5, 170, "SELECTED AUTON:");
+        Brain.Screen.printAt(5, 210, "                     "); 
+        Brain.Screen.printAt(5, 210, autonNames[currAuton].c_str());
+
+
+        if(Brain.Screen.pressing()){
+            while(Brain.Screen.pressing()) wait(10,msec);
+
+            int mx = Brain.Screen.xPosition();
+            int my = Brain.Screen.yPosition();
+
+            for(int i=0; i<NUM_AUTONS; i++){
+                if(mx >= autonButtons[i].x && mx <= autonButtons[i].x + autonButtons[i].w &&
+                   my >= autonButtons[i].y && my <= autonButtons[i].y + autonButtons[i].h){
+                    currAuton = i;
+                    selected = true;
+                    autonStarted = true;
+                    break;
+                }
+            }
+        }
+
+        wait(50,msec);
+    }
+
+
+    Brain.Screen.clearScreen();
+    Brain.Screen.setFont(mono60);
+    Brain.Screen.printAt(50, 100, "Auton Selected:");
+    Brain.Screen.printAt(50, 150, autonNames[currAuton].c_str());
+}
+
+
+/*
+void pre_auton(void) {
+    Brain.Screen.clearScreen();
+    Brain.Screen.setFont(vex::fontType::mono60);
+    inert.calibrate();
+    Brain.Screen.printAt(5,30,"calibrating inert:");
+    wait(3,sec);
+    Brain.Screen.clearScreen();
+}
+    */
+/*---------------------------------------------------------------------------*/
+/*                                                                           */
+/*                              Autonomous Task                              */
+/*                                                                           */
+/*  This task is used to control your robot during the autonomous phase of   */
+/*  a VEX Competition.                                                       */
+/*                                                                           */
+/*  You must modify the code to add your own robot specific commands here.   */
+/*---------------------------------------------------------------------------*/
+
+void autonomous(void) {
+    switch(currAuton) {
+        case 0: blueLeft(); break;
+        case 1: redLeft(); break;
+        case 2: blueRight(); break;
+        case 3: redRight(); break;
+        case 4: skillsAuton(); break; // NEW AUTON
+        case 5: twoInchAuton(); break; // AWP
+        default: break;
+    }
+    
+}
+
+
+/*---------------------------------------------------------------------------*/
+/*                                                                           */
+/*                              User Control Task                            */
+/*                                                                           */
+/*  This task is used to control your robot during the user control phase of */
+/*  a VEX Competition.                                                       */
+/*                                                                           */
+/*  You must modify the code to add your own robot specific commands here.   */
+/*---------------------------------------------------------------------------*/
+
+
+
+
+void wingMananger(){
+    wingState = true;
+    while(1){
+        if(controller1.ButtonX.pressing()){
+            while(controller1.ButtonX.pressing()){
+                wait(2,msec);
+            }
+            wingState=!wingState;
+        }
+        wing.set(wingState);
+    }
+}
+
+void adjustMananger(){
+    adjustState = true;
+    while(1){
+        if(controller1.ButtonA.pressing()){
+            while(controller1.ButtonA.pressing()){
+                wait(2,msec);
+            }
+            adjustState=!adjustState;
+        }
+        adjust.set(adjustState);
+    }
+}
+
+void tongueManager() {
+    bool tongueState = false;  
+    while (true) {
+
+        if (controller1.ButtonB.pressing()) {
+
+            while (controller1.ButtonB.pressing()) {
+                wait(5, msec);
+            }
+
+            tongueState = !tongueState;   
+            tongue.set(tongueState);    
+        }
+
+        wait(10, msec);
+    }
+}
+
+
+void intakeManager(){
+    s1IntakeOn = true;
+    s2IntakeOn=true;
+    while(1){
+        if(controller1.ButtonR1.pressing()){
+            while(controller1.ButtonR1.pressing()){
+                wait(10, msec);
+            }
+            s1IntakeOn=!s1IntakeOn;
+            
+        }
+
+        if(!s1IntakeOn){
+            intakeStage1.spin(forward,100,pct);
+        }else if(controller1.ButtonR2.pressing()){
+            intakeStage1.spin(reverse, 100, pct);
+        }else{
+            intakeStage1.stop();
+        } 
+
+        if(controller1.ButtonL1.pressing()){
+            intakeStage2.spin(forward,100,pct);
+        }else if(controller1.ButtonL2.pressing()){
+            intakeStage2.spin(reverse, 100, pct);
+        }else{
+            intakeStage2.stop();
+        }
+
+
+
+
+
+
+
+
+    }
+}
+
+
+double logDrive(double raw){
+    if(abs(raw)<10) return 0.0;
+    double x = abs(raw)/127.0;
+    double scaled = log10(1+9*x);
+    return (raw>0 ? 1.0 : -1.0)*scaled*127.0;
+}
+
+void driveManager(){
+    while(1) {
+        int raw3 = controller1.Axis3.position();
+        int raw1 = controller1.Axis1.position();
+
+
+        double axis3 = logDrive(raw3);
+        double axis1 = logDrive(raw1);
+
+        double turnBoost=1.5;
+        axis1*=turnBoost;
+
+        leftBack.spin(forward, axis3 + axis1, pct);
+        leftFrontBottom.spin(forward, axis3 + axis1, pct);
+        leftFrontTop.spin(forward, axis3 + axis1, pct);
+        rightBack.spin(forward,axis3 - axis1, pct);
+        rightFrontBottom.spin(forward,axis3 - axis1, pct);
+        rightFrontTop.spin(forward, axis3 - axis1, pct);
+        wait(20,msec);
+    }
+}
+
+void motorDegreeManagers(){
+    while(1){
+        Brain.Screen.printAt(5,10,"%d",leftFrontBottom.position(degrees));
+        Brain.Screen.printAt(5,25,"%d",leftBack.position(degrees));
+        Brain.Screen.printAt(5,40,"%d",leftFrontTop.position(degrees));
+        Brain.Screen.printAt(5,55,"%d",rightBack.position(degrees));
+        Brain.Screen.printAt(5,60,"%d",rightFrontBottom.position(degrees));
+        Brain.Screen.printAt(5,75,"%d",rightFrontTop.position(degrees));
+
+    }
+}
+
+void alignerManager(){
+    controller1.rumble("._."); //._.
+}
+
+void usercontrol(void) {
+    //Brain.Screen.printAt(5,30,"Driving");
+    //thread p(motorDegreeManagers);
+    thread i(intakeManager);
+    thread w(wingMananger);
+    thread a(adjustMananger);
+    thread d(driveManager);
+    thread t(tongueManager);
+    wing.set(false);
+    adjust.set(false);
+    aligner.pressed(alignerManager);
+
+    // User control code here, inside the loop
+    //Brain.Screen.printAt(10,50,"not aadityas password: 264859");
+    //Brain.Screen.printAt( 10, 50, "Aaditya's Password: 264 859" );
+    //while(1){}
+  
+
+}
+
+
+
+//
+// Main will set up the competition functions and callbacks.
+//
+int main() {
+  // Set up callbacks for autonomous and driver control periods.
+  Competition.autonomous(autonomous);
+  Competition.drivercontrol(usercontrol);
+
+  // Run the pre-autonomous function.
+  pre_auton();
+
+  // Prevent main from exiting with an infinite loop.
+  while (true) {
+    wait(100, msec);
+  }
+}
