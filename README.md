@@ -8,22 +8,23 @@ The project is organized for clean development, maintainability, and fast iterat
 
 
 ## Repository Structure  
-├ 4610E Comp Temp Main/ # The Competition Template containing the main Drive Code and the following autonomous routines: Blue Left, Red Left, Blue Right, and Red Right  
-|  
-├ 4610E Autons # The minor autonomous routines, such as Skills and Solo AWP  
+┣ 4610E Comp Temp Main/ # The Competition Template containing the main Drive Code and the following autonomous routines:  
+┃  -Blue Left, Red Left, Blue Right, and Red Right  
+┃  
+┣ 4610E Autons # The minor autonomous routines, such as Skills and Solo AWP  
 
 ##Subfolder General Structure  
-├ include/ # Header files (IDs, constants, helper utilities) 
-|  
-├ **src/ # Main C++ source**  
-|  
-├ vex/ # VEX project configuration and metadata  
-|  
-├ makefile # Command-line build script  
-|  
-├ .vscode/ # Optional VS Code configuration  
-|  
-└ .gitignore # Ignored files  
+┣ include/ # Header files (IDs, constants, helper utilities)  
+┃  
+┣ **src/ # Main C++ source**  
+┃  
+┣ vex/ # VEX project configuration and metadata  
+┃  
+┣ makefile # Command-line build script  
+┃  
+┣ .vscode/ # Optional VS Code configuration  
+┃  
+┗ .gitignore # Ignored files  
 
 ## Features  
 
