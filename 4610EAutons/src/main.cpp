@@ -20,14 +20,14 @@ competition Competition;
 vex::brain Brain;
 
 // define your global instances of motors and other devices here
-motor leftFrontTop = motor(PORT1,false);
-motor leftFrontBottom = motor(PORT5,true);
-motor leftBack = motor(PORT11,true);
-motor rightFrontTop = motor(PORT6,true);
-motor rightFrontBottom = motor(PORT10,false);
-motor rightBack = motor(PORT17,false);
-motor intakeStage1 = motor(PORT2,true);
-motor intakeStage2 = motor(PORT4,true);
+motor leftFrontTop = motor(PORT1,ratio36_1, false);
+motor leftFrontBottom = motor(PORT5,ratio36_1, true);
+motor leftBack = motor(PORT11,ratio36_1, true);
+motor rightFrontTop = motor(PORT6,ratio36_1, true);
+motor rightFrontBottom = motor(PORT10,ratio36_1, false);
+motor rightBack = motor(PORT17,ratio36_1, false);
+motor intakeStage1 = motor(PORT2,ratio36_1, true);
+motor intakeStage2 = motor(PORT4,ratio36_1, true);
 digital_out wing = digital_out(Brain.ThreeWirePort.A);
 digital_out adjust = digital_out(Brain.ThreeWirePort.B);
 digital_out tongue = digital_out(Brain.ThreeWirePort.C);
@@ -41,8 +41,8 @@ controller controller1 = controller();
 bool s1IntakeOn = false;
 bool s2IntakeOn=false;
 bumper aligner = bumper(Brain.ThreeWirePort.H);
-double k_p_drive = 0.5;
-double k_p_turn = 0.3;
+double k_p_drive = 0.15;
+double k_p_turn = 0.15;
 /*---------------------------------------------------------------------------*/
 /*                          Pre-Autonomous Functions                         */
 /*                                                                           */
@@ -54,29 +54,39 @@ double k_p_turn = 0.3;
 /*---------------------------------------------------------------------------*/
 
 
+
 double inchesToDegrees(double inches){
-    printf("Inches: %f\n", inches);
-    const double PI = 3.14159265358979323;
-    const double wheelDiamater = 3;
-    printf("%f",(inches*360.0)/(PI*wheelDiamater));
-    return (inches*360.0)/(PI*wheelDiamater);
+    return(inches * 8.125);
+    //const double PI = 3.14159265358979323;
+    //const double wheelDiamater = 3;
+    //return 0.75 * ((inches*360.0)/(PI*wheelDiamater));//0.75 gear ratio 36:48 
 }
 
-void driveForwardProp(double distance){
+void driveForwardProp(double distance,double minSpeed=40, double maxSpeed=40){
     leftFrontTop.resetPosition();
     leftFrontBottom.resetPosition();
     leftBack.resetPosition();
+    rightFrontTop.resetPosition();
+    rightFrontBottom.resetPosition();
+    rightBack.resetPosition();
     double target = inchesToDegrees(distance);
     double k_p = k_p_drive;
-    double position = leftFrontTop.position(degrees);
+    double position = (leftFrontTop.position(deg) + leftFrontBottom.position(deg) + leftBack.position(deg) + rightFrontTop.position(deg) + rightFrontBottom.position(deg) + rightBack.position(deg)) / 6.0;
     double error = target - position;
-
-    while(fabs(error)>10){
-        position = leftFrontTop.position(degrees);
+    printf("drive forward: %f\n", target);
+    while(fabs(error)>8){
+        position = (leftFrontTop.position(deg) + leftFrontBottom.position(deg) + leftBack.position(deg) + rightFrontTop.position(deg) + rightFrontBottom.position(deg) + rightBack.position(deg)) / 6.0;
         error = target - position;
 
         double speed = k_p * error;
-        //speed = std::min(std::max(speed, -100.0), 100.0);
+
+        if (speed > 0) speed = std::max(speed, minSpeed);
+        else if (speed < 0) speed = std::min(speed, -minSpeed);
+
+        speed = std::min(std::max(speed, -maxSpeed), maxSpeed);
+
+        printf("Error: %f\n", error);
+        printf("Position: %f\n", position); 
 
         leftFrontTop.spin(forward,speed,percent);
         leftFrontBottom.spin(forward,speed,percent);
@@ -97,7 +107,7 @@ void driveForwardProp(double distance){
     
 }
 
-void driveReverseProp(double distance){
+void driveReverseProp(double distance,double minSpeed=40, double maxSpeed=40){
     leftFrontTop.resetPosition();
     leftFrontBottom.resetPosition();
     leftBack.resetPosition();
@@ -106,14 +116,21 @@ void driveReverseProp(double distance){
 
     double position = leftFrontTop.position(degrees);
     double error = target + position;
-
-    while(fabs(error)>10){
+    printf("drive reverse: %f\n", target);
+    while(fabs(error)>8){
         position = leftFrontTop.position(degrees);
         error = target - position;
 
         double speed = k_p * error;
         //speed = std::min(std::max(speed, -100.0), 100.0);
 
+        if (speed > 0) speed = std::max(speed, minSpeed);
+        else if (speed < 0) speed = std::min(speed, -minSpeed);
+
+        speed = std::min(std::max(speed, -maxSpeed), maxSpeed);
+
+        printf("Error: %f\n", error);
+        printf("Position: %f\n", position); 
         leftFrontTop.spin(reverse,speed,percent);
         leftFrontBottom.spin(reverse,speed,percent);
         leftBack.spin(reverse,speed,percent);
@@ -132,22 +149,24 @@ void driveReverseProp(double distance){
 }
 
 
-void turnLeftProp(double degreesTarget) {
+void turnLeftProp(double degreesTarget, double minSpeed=5, double maxSpeed=50) {
     inert.resetRotation();
     double k_p = k_p_turn;
 
     double current = inert.rotation(degrees);
     double error = degreesTarget - current;
-
-    while (fabs(error)>2) {
-        Brain.Screen.printAt(30,30,"Err: %f", error);
+    printf("turn left: %f\n", degreesTarget);
+    while (fabs(error)>10) {
         current = inert.rotation(degrees);
         error = degreesTarget + current;
 
         double speed = k_p * error;
-        Brain.Screen.printAt(30,50,"Spd: %f", speed);
+        
+        if (speed > 0) speed = std::max(speed, minSpeed);
+        else if (speed < 0) speed = std::min(speed, -minSpeed);
 
-        //speed = std::min(std::max(speed, -100.0), 100.0);
+        speed = std::min(std::max(speed, -maxSpeed), maxSpeed);
+        printf("Error: %f\n", error);
 
         leftFrontTop.spin(reverse, speed, pct);
         leftFrontBottom.spin(reverse, speed, pct);
@@ -167,20 +186,27 @@ void turnLeftProp(double degreesTarget) {
     rightBack.stop(hold);
 }
 
-void turnRightProp(double degreesTarget) {
+void turnRightProp(double degreesTarget, double minSpeed=5, double maxSpeed=50) {
     inert.resetRotation();
     double k_p = k_p_turn;
 
     double current = inert.rotation(degrees);
     double error = degreesTarget - current; 
-
-    while (fabs(error)>2) {
+    printf("turn right: %f\n", degreesTarget);
+    while (fabs(error)>10) {
         Brain.Screen.printAt(30,30,"Err: %f", error);
         current = inert.rotation(degrees);
         error = degreesTarget - current; 
 
         double speed = k_p * error+1;
-        //speed = std::min(std::max(speed, -100.0), 100.0);
+
+        if (speed > 0) speed = std::max(speed, minSpeed);
+        else if (speed < 0) speed = std::min(speed, -minSpeed);        
+        speed = std::min(std::max(speed, -maxSpeed), maxSpeed);
+
+
+        printf("Error: %f\n", error);
+
 
         leftFrontTop.spin(forward, speed, percent);
         leftFrontBottom.spin(forward, speed, percent);
@@ -208,24 +234,23 @@ void turnRightProp(double degreesTarget) {
 //simple skills auto
 
 void skillsAuton(){
-    tongue.set(false);
+    tongue.set(false);//idk if flipped or not
     adjust.set(true);
-    intakeStage1.spin(forward);
-    driveForwardProp(5);
-    /*
+    //intakeStage1.spin(forward);
+    driveForwardProp(40,30);
     turnRightProp(90);
     tongue.set(true);
     intakeStage1.spin(forward);
     driveForwardProp(5);
     wait(2,sec);
-    driveReverseProp(10);
+    driveReverseProp(30);
     adjust.set(true);
     intakeStage2.spin(forward);
     wait(2,sec);
     adjust.set(false);
     driveForwardProp(5);
     turnRightProp(90);
-    */
+    
 
 }
 
