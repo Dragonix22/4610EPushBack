@@ -8,11 +8,14 @@ The project is organized for clean development, maintainability, and fast iterat
 
 
 ## Repository Structure
+├──4610E Comp Temp Main/ # The Competition Template containing the main Drive Code and the following autonomous routines: Blue Left, Red Left, Blue Right, and Red Right
+├──4610E Autons # The minor autonomous routines, such as Skills and Solo AWP
 
+##Subfolder General Structure
 ├── include/ # Header files (IDs, constants, helper utilities)  
 
-├── src/ # Main C++ source (autonomous, driver control, tuning)  
-
+**├── src/ # Main C++ source   
+**
 ├── vex/ # VEX project configuration and metadata  
 
 ├── makefile # Command-line build script  
@@ -23,17 +26,17 @@ The project is organized for clean development, maintainability, and fast iterat
 
 ## Features
 
-* Drivetrain Control: Six-motor drivetrain with proportional forward/reverse and precise turning using the inertial sensor.
+* Drivetrain Control: P-based six-motor drivetrain with proportional forward/reverse, precise turning using the inertial sensor, and internal conversion between units.
 
 * Intake System: Two-stage intake controlled via controller buttons, with forward/reverse and toggle functionality.
 
 * Mechanisms: Wings, adjuster, and tongue actuators toggled independently using controller buttons.
 
- Autonomous Routines: Modular selectable routines via Brain touchscreen: Blue Left, Red Left, Blue Right, Red Right, and Skills Auton.
+ Autonomous Routines: Modular selectable routines via Brain touchscreen: Blue Left, Red Left, Blue Right, Red Right, Skills Auton, Solo AWP, and debug routines.
 
  Inertial Sensor Integration: Calibrated pre-match for accurate turning in autonomous.
 
-* Driver Control: Smooth, logarithmic drive control with threaded managers for subsystems.
+* Driver Control: Smooth, calibrated drive control with threaded managers for subsystems.
 
 * Screen Feedback: Motor positions, autonomous selection, and debug info displayed on Brain screen.
 
@@ -43,7 +46,8 @@ The project is organized for clean development, maintainability, and fast iterat
 ## Getting Started
 
 ### 1. Clone the Repository
-```bash
+```
+bash
 git clone https://github.com/Dragonix22/4610EPushBack.git
 cd 4610EPushBack
 ```
