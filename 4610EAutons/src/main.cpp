@@ -239,19 +239,39 @@ void skillsAuton(){
     //intakeStage1.spin(forward);
     driveForwardProp(40,30);
     turnRightProp(90);
+
     tongue.set(true);
     intakeStage1.spin(forward);
-    driveForwardProp(5);
+    driveForwardProp(2);
     wait(2,sec);
-    driveReverseProp(30);
+
+    driveReverseProp(4);
     adjust.set(true);
     intakeStage2.spin(forward);
     wait(2,sec);
     adjust.set(false);
-    driveForwardProp(5);
-    turnRightProp(90);
-    
+    tongue.set(false);
+    intakeStage2.stop(hold);
 
+    driveForwardProp(4);
+    turnRightProp(90); 
+
+    driveForwardProp(40,30);
+    turnLeftProp(90);
+    tongue.set(true);
+    intakeStage1.spin(forward);
+    driveForwardProp(2);
+    wait(2,sec);
+
+    driveReverseProp(4);
+    adjust.set(true);
+    intakeStage2.spin(forward);
+    wait(2,sec);
+    adjust.set(false);
+    tongue.set(false);
+    intakeStage2.stop(hold);
+
+    //see how long it takes, then whether to go for parking or drive to other side of field
 }
 
 
