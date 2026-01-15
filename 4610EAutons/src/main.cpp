@@ -271,7 +271,7 @@ void skillsAuton(){
     tongue.set(false);
     intakeStage2.stop(hold);
 
-    //see how long it takes, then whether to go for parking or drive to other side of field
+    //drive to other side of field and either repeat or empty both loaders
 }
 
 
@@ -529,42 +529,47 @@ void intakeManager(){
             intakeStage2.stop();
         }
 
-
-
-
-
-
-
-
+        wait(10,msec);
     }
 }
 
 
-double logDrive(double raw){
-    if(fabs(raw)<10) return 0.0;
-    double x = fabs(raw)/127.0;
-    double scaled = log10(1+9*x);
-    return (raw>0 ? 1.0 : -1.0)*scaled*127.0;
+double logDrive(double raw) {
+    const double deadzone = 10.0;
+    const double maxInput = 127.0;
+    const double curve = 5.0; 
+    if (fabs(raw) < deadzone) return 0.0;
+    double sign = (raw > 0) ? 1.0 : -1.0;
+    double x = (fabs(raw) - deadzone) / (maxInput - deadzone);
+    double scaled = log10(1.0 + curve * x) / log10(1.0 + curve);
+    return sign * scaled * maxInput;
 }
+//helper functionto clamp values for drive code
+double clamp(double v, double minV, double maxV) {
+    return fmin(fmax(v, minV), maxV);
+}
+
 
 void driveManager(){
     while(1) {
         int raw3 = controller1.Axis3.position();
-        int raw1 = controller1.Axis1.position();
-
-
+        int raw1 = controller1.Axis1.position(); 
         double axis3 = logDrive(raw3);
         double axis1 = logDrive(raw1);
 
         double turnBoost=1.5;
         axis1*=turnBoost;
 
-        leftBack.spin(forward, axis3 + axis1, pct);
-        leftFrontBottom.spin(forward, axis3 + axis1, pct);
-        leftFrontTop.spin(forward, axis3 + axis1, pct);
-        rightBack.spin(forward,axis3 - axis1, pct);
-        rightFrontBottom.spin(forward,axis3 - axis1, pct);
-        rightFrontTop.spin(forward, axis3 - axis1, pct);
+        double left = clamp(axis3 + axis1, -127, 127);
+        double right = clamp(axis3 - axis1, -127, 127);
+
+        leftBack.spin(forward, left, pct);
+        leftFrontBottom.spin(forward, left, pct);
+        leftFrontTop.spin(forward, left, pct);
+        rightBack.spin(forward, right, pct);
+        rightFrontBottom.spin(forward, right, pct);
+        rightFrontTop.spin(forward, right, pct);
+
         wait(20,msec);
     }
 }
