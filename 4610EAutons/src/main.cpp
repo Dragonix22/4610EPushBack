@@ -35,14 +35,31 @@ bool wingState = false;
 bool adjustState = false;
 bool tongueState = false;
 inertial inert = inertial(PORT21);
-bool autonStarted = false;
-int currAuton = 0;
 controller controller1 = controller();
 bool s1IntakeOn = false;
 bool s2IntakeOn=false;
 bumper aligner = bumper(Brain.ThreeWirePort.H);
 double k_p_drive = 0.15;
 double k_p_turn = 0.15;
+
+
+int autonPage=0;
+bool autonStarted = false;
+enum AutonID {
+    BLUE_LEFT,
+    RED_LEFT,
+    BLUE_RIGHT,
+    RED_RIGHT,
+    SKILLS,
+    TWO_INCH,
+    DEBUG,
+    PARK,
+    SOLO_AWP
+};
+
+int currAuton = BLUE_LEFT;
+
+
 /*---------------------------------------------------------------------------*/
 /*                          Pre-Autonomous Functions                         */
 /*                                                                           */
@@ -276,134 +293,223 @@ void skillsAuton(){
 
 
 void soloAWP(){
+    //lock in for this
+}
 
+
+void parkAuton(){
+    tongue.set(false);
+    intakeStage1.spin(forward);
+    driveForwardProp(7,30);
 }
 
 
 
-//prev skills auton
-/*
-void skillsAuton(){
-    adjust.set(true);
+void redLeft(){
+    adjust.set(true);    
     intakeStage1.spin(forward);
     driveForwardProp(32);
-    turnRightProp(135);
-    driveForwardProp(48);
-
-    turnRightProp(45);
-    driveForwardProp(34);
-    turnRightProp(45);
-
-    driveForwardProp(24);
-    driveReverseProp(48);
-
-    tongue.set(true);
+    turnRightProp(60);    
+    driveForwardProp(16);
     intakeStage2.spin(forward);
     wait(2,sec);
     intakeStage2.stop(hold);
-    tongue.set(false);
-
-    turnRightProp(45);
-    driveForwardProp(68);
-    turnRightProp(135); 
-
-    driveForwardProp(24);
-    turnRightProp(30);
-    driveForwardProp(45);
-    turnLeftProp(100);
-    driveForwardProp(24);
-
+    driveReverseProp(60);
+    turnRightProp(135);
+    driveForwardProp(20);
     tongue.set(true);
     wait(2,sec);
     tongue.set(false);
-    turnRightProp(20);
-    //sqrt((2.5*24)^2+(1.5*24)^2)=90.55
-    driveReverseProp(91);
-    adjust.set(false);
-    intakeStage2.spin(forward); 
-
+    adjust.set(true);
+    driveReverseProp(40);
+    intakeStage2.spin(forward);
 }
-*/
+
+void blueLeft(){
+    redLeft();
+}
+void redRight(){
+    tongue.set(false);
+    adjust.set(true);    
+    intakeStage1.spin(forward);
+    driveForwardProp(32);
+    
+    turnLeftProp(60);    
+    driveForwardProp(16);
+    intakeStage2.spin(forward);
+    wait(2,sec);
+    intakeStage2.stop(hold);
+    driveReverseProp(60);
+    turnLeftProp(135);
+    driveForwardProp(20);
+    tongue.set(true);
+    wait(2,sec);
+    tongue.set(false);
+    adjust.set(true);
+    driveReverseProp(40);
+    intakeStage2.spin(forward);
+    }
+
+
+void blueRight(){
+    redRight();
+}
+
 void debug(){
     driveForwardProp(2);
 }
 
 void pre_auton(void) {
+
     tongue.set(true);
     wing.set(true);
     adjust.set(true);
-    Brain.Screen.clearScreen();
-    Brain.Screen.setFont(mono60);
 
+    Brain.Screen.clearScreen();
+    Brain.Screen.setFont(mono30);
+
+    // Inertial calibration
     inert.calibrate();
     Brain.Screen.printAt(5, 30, "Calibrating inertial...");
-    while(inert.isCalibrating()) wait(100, msec); 
+    while (inert.isCalibrating()) wait(100, msec);
     Brain.Screen.clearScreen();
 
-    const int NUM_AUTONS = 3;
-    string autonNames[NUM_AUTONS] = {
-        "Skills Auton",
-        "Debug",
-        "solo AWP"
+    struct Button { int x, y, w, h; };
+
+    Button pageButton = {10, 10, 120, 60};
+    autonPage = 0;
+
+    // ---------- MATCH AUTONS ----------
+    const int NUM_MATCH = 4;
+    string matchNames[NUM_MATCH] = {
+        "Blue L", "Red L", "Blue R", "Red R"
     };
 
-    struct Button { int x, y, w, h; };
-    Button autonButtons[NUM_AUTONS] = {
-        {270, 10, 80, 80},   // Skills
-        {355, 10, 80, 80},   // Debug
-        {270, 95, 80, 80}//,   // Solo AWP
-        //{355, 95, 80, 80},   // Red Right
+    AutonID matchIDs[NUM_MATCH] = {
+        BLUE_LEFT, RED_LEFT, BLUE_RIGHT, RED_RIGHT
+    };
 
+    Button matchButtons[NUM_MATCH] = {
+        {270, 10, 80, 80},
+        {355, 10, 80, 80},
+        {270, 95, 80, 80},
+        {355, 95, 80, 80}
+    };
+
+    // ---------- SKILLS / UTIL ----------
+    const int NUM_SKILLS = 4;
+    string skillNames[NUM_SKILLS] = {
+        "Skills", "Debug", "Solo AWP", "Park"
+    };
+
+    AutonID skillIDs[NUM_SKILLS] = {
+        SKILLS, DEBUG, SOLO_AWP, PARK
+    };
+
+    Button skillButtons[NUM_SKILLS] = {
+        {270, 10, 80, 80},
+        {355, 10, 80, 80},
+        {270, 95, 80, 80},
+        {355, 95, 80, 80}
     };
 
     bool selected = false;
 
-    while(!selected){
-        for(int i=0; i<NUM_AUTONS; i++){
-            Brain.Screen.setFillColor(blue);
+    while (!selected) {
+        Brain.Screen.clearScreen();
 
-            Brain.Screen.drawRectangle(autonButtons[i].x, autonButtons[i].y,
-                                       autonButtons[i].w, autonButtons[i].h);
-
-            Brain.Screen.setFillColor(black);
-            Brain.Screen.setFont(mono30);
-            Brain.Screen.printAt(autonButtons[i].x + 10, autonButtons[i].y + 50, autonNames[i].c_str());
-        }
+        // ----- PAGE BUTTON -----
+        Brain.Screen.setFillColor({200, 200, 200});
+        Brain.Screen.drawRectangle(
+            pageButton.x, pageButton.y,
+            pageButton.w, pageButton.h
+        );
 
         Brain.Screen.setFillColor(black);
-        Brain.Screen.setFont(mono30);
-        Brain.Screen.printAt(5, 170, "SELECTED AUTON:");
-        Brain.Screen.printAt(5, 210, "                     "); 
-        Brain.Screen.printAt(5, 210, autonNames[currAuton].c_str());
+        Brain.Screen.printAt(
+            pageButton.x + 15,
+            pageButton.y + 40,
+            autonPage == 0 ? "MATCH" : "SKILLS"
+        );
 
+        // ----- DRAW BUTTONS -----
+        if (autonPage == 0) {
+            for (int i = 0; i < NUM_MATCH; i++) {
+                Brain.Screen.setFillColor((i == 0 || i == 2) ? blue : red);
+                Brain.Screen.drawRectangle(
+                    matchButtons[i].x, matchButtons[i].y,
+                    matchButtons[i].w, matchButtons[i].h
+                );
+                Brain.Screen.setFillColor(black);
+                Brain.Screen.printAt(
+                    matchButtons[i].x + 5,
+                    matchButtons[i].y + 50,
+                    matchNames[i].c_str()
+                );
+            }
+        } else {
+            for (int i = 0; i < NUM_SKILLS; i++) {
+                Brain.Screen.setFillColor(green);
+                Brain.Screen.drawRectangle(
+                    skillButtons[i].x, skillButtons[i].y,
+                    skillButtons[i].w, skillButtons[i].h
+                );
+                Brain.Screen.setFillColor(black);
+                Brain.Screen.printAt(
+                    skillButtons[i].x + 5,
+                    skillButtons[i].y + 50,
+                    skillNames[i].c_str()
+                );
+            }
+        }
 
-        if(Brain.Screen.pressing()){
-            while(Brain.Screen.pressing()) wait(10,msec);
-
+        // ----- TOUCH -----
+        if (Brain.Screen.pressing()) {
+            while (Brain.Screen.pressing()) wait(10, msec);
             int mx = Brain.Screen.xPosition();
             int my = Brain.Screen.yPosition();
 
-            for(int i=0; i<NUM_AUTONS; i++){
-                if(mx >= autonButtons[i].x && mx <= autonButtons[i].x + autonButtons[i].w &&
-                   my >= autonButtons[i].y && my <= autonButtons[i].y + autonButtons[i].h){
-                    currAuton = i;
-                    selected = true;
-                    autonStarted = true;
-                    break;
+            // Page toggle
+            if (mx >= pageButton.x && mx <= pageButton.x + pageButton.w &&
+                my >= pageButton.y && my <= pageButton.y + pageButton.h) {
+                autonPage = !autonPage;
+                continue;
+            }
+
+            // Match selection
+            if (autonPage == 0) {
+                for (int i = 0; i < NUM_MATCH; i++) {
+                    if (mx >= matchButtons[i].x &&
+                        mx <= matchButtons[i].x + matchButtons[i].w &&
+                        my >= matchButtons[i].y &&
+                        my <= matchButtons[i].y + matchButtons[i].h) {
+                        currAuton = matchIDs[i];
+                        selected = true;
+                    }
+                }
+            }
+            // Skills selection
+            else {
+                for (int i = 0; i < NUM_SKILLS; i++) {
+                    if (mx >= skillButtons[i].x &&
+                        mx <= skillButtons[i].x + skillButtons[i].w &&
+                        my >= skillButtons[i].y &&
+                        my <= skillButtons[i].y + skillButtons[i].h) {
+                        currAuton = skillIDs[i];
+                        selected = true;
+                    }
                 }
             }
         }
 
-        wait(50,msec);
+        wait(50, msec);
     }
 
-
+    // ----- CONFIRM -----
     Brain.Screen.clearScreen();
     Brain.Screen.setFont(mono60);
-    Brain.Screen.printAt(50, 100, "Auton Selected:");
-    Brain.Screen.printAt(50, 150, autonNames[currAuton].c_str());
+    Brain.Screen.printAt(40, 120, "Auton Selected");
 }
-
 
 /*
 void pre_auton(void) {
@@ -425,23 +531,27 @@ void pre_auton(void) {
 /*  You must modify the code to add your own robot specific commands here.   */
 /*---------------------------------------------------------------------------*/
 //override auton to always run 1 auton for debug purposes
+/*
 void autonomous(void) {
     skillsAuton();
 }
 
 
-/*
+*/
+
 void autonomous(void) {
     switch(currAuton) {
-        case 0: skillsAuton(); break;
-        case 1: debug(); break;
-        case 2: soloAWP(); break;
+        case SKILLS: skillsAuton(); break;
+        case DEBUG: debug(); break;
+        case SOLO_AWP: soloAWP(); break;
+        case PARK: parkAuton(); break;
+        
         default: break;
     }
     
 }
 
-*/
+
 
 /*---------------------------------------------------------------------------*/
 /*                                                                           */
