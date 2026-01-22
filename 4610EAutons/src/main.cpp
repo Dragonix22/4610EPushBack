@@ -34,7 +34,7 @@ digital_out tongue = digital_out(Brain.ThreeWirePort.C);
 bool wingState = false;
 bool adjustState = false;
 bool tongueState = false;
-inertial inert = inertial(PORT21);
+inertial inert = inertial(PORT16);
 controller controller1 = controller();
 bool s1IntakeOn = false;
 bool s2IntakeOn=false;
@@ -123,7 +123,11 @@ void driveForwardProp(double distance,double minSpeed=40, double maxSpeed=40){
     rightBack.stop(hold);
     
 }
+void driveReverseProp(double distance,double minSpeed=40, double maxSpeed=40){
+    driveForwardProp(-1*distance,minSpeed,maxSpeed);
+}
 
+/*
 void driveReverseProp(double distance,double minSpeed=40, double maxSpeed=40){
     leftFrontTop.resetPosition();
     leftFrontBottom.resetPosition();
@@ -164,7 +168,7 @@ void driveReverseProp(double distance,double minSpeed=40, double maxSpeed=40){
     rightFrontBottom.stop(hold);
     rightBack.stop(hold);
 }
-
+*/
 
 void turnLeftProp(double degreesTarget, double minSpeed=5, double maxSpeed=50) {
     inert.resetRotation();
@@ -254,23 +258,31 @@ void skillsAuton(){
     tongue.set(false);//idk if flipped or not
     adjust.set(true);
     //intakeStage1.spin(forward);
-    driveForwardProp(40,30);
+    driveForwardProp(37,30);
     turnRightProp(90);
 
-    tongue.set(true);
+   //tongue.set(true);
     intakeStage1.spin(forward);
-    driveForwardProp(2);
+    driveForwardProp(7);
+    wait(2,sec);
+    driveReverseProp(7);
+    turnRightProp(45);
+    driveReverseProp(17);
+    turnLeftProp(45);
+
+    driveReverseProp(60);
+    turnRightProp(90);
+
+    driveForwardProp(10);
+    turnRightProp(90);
+    
+    driveReverseProp(25);
     wait(2,sec);
 
-    driveReverseProp(4);
-    adjust.set(true);
-    intakeStage2.spin(forward);
+    driveForwardProp(20);
     wait(2,sec);
-    adjust.set(false);
-    tongue.set(false);
-    intakeStage2.stop(hold);
 
-    driveForwardProp(4);
+ /*
     turnRightProp(90); 
 
     driveForwardProp(40,30);
@@ -287,7 +299,7 @@ void skillsAuton(){
     adjust.set(false);
     tongue.set(false);
     intakeStage2.stop(hold);
-
+*/
     //drive to other side of field and either repeat or empty both loaders
 }
 
@@ -329,25 +341,24 @@ void blueLeft(){
     redLeft();
 }
 void redRight(){
-    tongue.set(false);
-    adjust.set(true);    
-    intakeStage1.spin(forward);
-    driveForwardProp(32);
-    
-    turnLeftProp(60);    
-    driveForwardProp(16);
-    intakeStage2.spin(forward);
-    wait(2,sec);
-    intakeStage2.stop(hold);
-    driveReverseProp(60);
-    turnLeftProp(135);
-    driveForwardProp(20);
-    tongue.set(true);
-    wait(2,sec);
-    tongue.set(false);
+    tongue.set(false);//idk if flipped or not
     adjust.set(true);
-    driveReverseProp(40);
+    //intakeStage1.spin(forward);
+    driveForwardProp(37,30);
+    turnRightProp(90);
+
+   //tongue.set(true);
+    intakeStage1.spin(forward);
+    driveForwardProp(7);
+    wait(2,sec);
+
+    driveReverseProp(25);
+    adjust.set(true);
+
     intakeStage2.spin(forward);
+    wait(2,sec);
+
+    driveForwardProp(10,5,20);
     }
 
 
@@ -356,14 +367,14 @@ void blueRight(){
 }
 
 void debug(){
-    driveForwardProp(2);
+    driveForwardProp(-5);
 }
 
 void pre_auton(void) {
 
-    tongue.set(true);
-    wing.set(true);
-    adjust.set(true);
+    tongue.set(false);
+    wing.set(false);
+    adjust.set(false);
 
     Brain.Screen.clearScreen();
     Brain.Screen.setFont(mono30);
@@ -531,14 +542,13 @@ void pre_auton(void) {
 /*  You must modify the code to add your own robot specific commands here.   */
 /*---------------------------------------------------------------------------*/
 //override auton to always run 1 auton for debug purposes
-/*
+
 void autonomous(void) {
     skillsAuton();
 }
 
 
-*/
-
+/*
 void autonomous(void) {
     switch(currAuton) {
         case SKILLS: skillsAuton(); break;
@@ -549,8 +559,7 @@ void autonomous(void) {
         default: break;
     }
     
-}
-
+}*/
 
 
 /*---------------------------------------------------------------------------*/
