@@ -28,9 +28,9 @@ motor rightFrontBottom = motor(PORT10,ratio36_1, false);
 motor rightBack = motor(PORT17,ratio36_1, false);
 motor intakeStage1 = motor(PORT2,ratio36_1, true);
 motor intakeStage2 = motor(PORT4,ratio36_1, true);
-digital_out wing = digital_out(Brain.ThreeWirePort.A);
+digital_out wing = digital_out(Brain.ThreeWirePort.C);
 digital_out adjust = digital_out(Brain.ThreeWirePort.B);
-digital_out tongue = digital_out(Brain.ThreeWirePort.C);
+digital_out tongue = digital_out(Brain.ThreeWirePort.A);
 bool wingState = false;
 bool adjustState = false;
 bool tongueState = false;
@@ -90,7 +90,7 @@ void driveForwardProp(double distance,double minSpeed=40, double maxSpeed=40){
     double k_p = k_p_drive;
     double position = (leftFrontTop.position(deg) + leftFrontBottom.position(deg) + leftBack.position(deg) + rightFrontTop.position(deg) + rightFrontBottom.position(deg) + rightBack.position(deg)) / 6.0;
     double error = target - position;
-    printf("drive forward: %f\n", target);
+    //printf("drive forward: %f\n", target);
     while(fabs(error)>8){
         position = (leftFrontTop.position(deg) + leftFrontBottom.position(deg) + leftBack.position(deg) + rightFrontTop.position(deg) + rightFrontBottom.position(deg) + rightBack.position(deg)) / 6.0;
         error = target - position;
@@ -102,8 +102,8 @@ void driveForwardProp(double distance,double minSpeed=40, double maxSpeed=40){
 
         speed = std::min(std::max(speed, -maxSpeed), maxSpeed);
 
-        printf("Error: %f\n", error);
-        printf("Position: %f\n", position); 
+        //printf("Error: %f\n", error);
+        //printf("Position: %f\n", position); 
 
         leftFrontTop.spin(forward,speed,percent);
         leftFrontBottom.spin(forward,speed,percent);
@@ -176,7 +176,7 @@ void turnLeftProp(double degreesTarget, double minSpeed=5, double maxSpeed=50) {
 
     double current = inert.rotation(degrees);
     double error = degreesTarget - current;
-    printf("turn left: %f\n", degreesTarget);
+    //printf("turn left: %f\n", degreesTarget);
     while (fabs(error)>10) {
         current = inert.rotation(degrees);
         error = degreesTarget + current;
@@ -187,7 +187,7 @@ void turnLeftProp(double degreesTarget, double minSpeed=5, double maxSpeed=50) {
         else if (speed < 0) speed = std::min(speed, -minSpeed);
 
         speed = std::min(std::max(speed, -maxSpeed), maxSpeed);
-        printf("Error: %f\n", error);
+        //printf("Error: %f\n", error);
 
         leftFrontTop.spin(reverse, speed, pct);
         leftFrontBottom.spin(reverse, speed, pct);
@@ -213,7 +213,7 @@ void turnRightProp(double degreesTarget, double minSpeed=5, double maxSpeed=50) 
 
     double current = inert.rotation(degrees);
     double error = degreesTarget - current; 
-    printf("turn right: %f\n", degreesTarget);
+//    printf("turn right: %f\n", degreesTarget);
     while (fabs(error)>10) {
         Brain.Screen.printAt(30,30,"Err: %f", error);
         current = inert.rotation(degrees);
@@ -226,7 +226,7 @@ void turnRightProp(double degreesTarget, double minSpeed=5, double maxSpeed=50) 
         speed = std::min(std::max(speed, -maxSpeed), maxSpeed);
 
 
-        printf("Error: %f\n", error);
+        //printf("Error: %f\n", error);
 
 
         leftFrontTop.spin(forward, speed, percent);
@@ -255,17 +255,60 @@ void turnRightProp(double degreesTarget, double minSpeed=5, double maxSpeed=50) 
 //simple skills auto
 
 void skillsAuton(){
-    tongue.set(false);//idk if flipped or not
+    
+    tongue.set(false);
     adjust.set(true);
-    //intakeStage1.spin(forward);
-    driveForwardProp(37,30);
+    driveForwardProp(32,30);
     turnRightProp(90);
 
-   //tongue.set(true);
+    tongue.set(true);
+    wait(0.5,sec);
+    driveForwardProp(8.3,15,15);
     intakeStage1.spin(forward);
-    driveForwardProp(7);
-    wait(2,sec);
+    wait(4,sec);
+    driveReverseProp(2);
+    tongue.set(false);
+
+    turnRightProp(45);
+    driveReverseProp(19);
+    turnLeftProp(45);
+
+    driveReverseProp(60);
+    turnRightProp(90);
+
+    driveForwardProp(10);
+    turnRightProp(90);
+    
+    driveReverseProp(10);
+    intakeStage2.spin(forward);
+    wait(5,sec);
+    intakeStage2.stop(hold);
+
+    tongue.set(true);
+    driveForwardProp(20,15,15);
+    intakeStage1.spin(forward);
+    wait(4,sec);
+    driveReverseProp(20);
+    intakeStage2.spin(forward);
+    wait(5,sec);
+    intakeStage2.stop(hold);
+    tongue.set(false);
+    driveForwardProp(15);
+    turnLeftProp(90);
+
+//halfway
+    driveForwardProp(32);
+    turnRightProp(90);
+    
+
+//duplicated
+    tongue.set(true);
+    wait(0.5,sec);
+    driveForwardProp(8.3,15,15);
+    intakeStage1.spin(forward);
+    wait(4,sec);
     driveReverseProp(7);
+    tongue.set(false);
     turnRightProp(45);
     driveReverseProp(17);
     turnLeftProp(45);
@@ -277,10 +320,18 @@ void skillsAuton(){
     turnRightProp(90);
     
     driveReverseProp(25);
-    wait(2,sec);
+    intakeStage2.spin(forward);
+    wait(5,sec);
+    intakeStage2.stop(hold);
 
-    driveForwardProp(20);
-    wait(2,sec);
+    tongue.set(true);
+    driveForwardProp(8.3,15,15);
+    intakeStage1.spin(forward);
+    wait(4,sec);
+    driveReverseProp(10);
+    turnLeftProp(70);
+    //driveForwardProp(20,50,50);
+
 
  /*
     turnRightProp(90); 
@@ -304,61 +355,67 @@ void skillsAuton(){
 }
 
 
-void soloAWP(){
-    //lock in for this
-}
 
 
 void parkAuton(){
     tongue.set(false);
     intakeStage1.spin(forward);
-    driveForwardProp(7,30);
+    driveForwardProp(7,50);
 }
 
 
 
 void redLeft(){
-    adjust.set(true);    
-    intakeStage1.spin(forward);
-    driveForwardProp(32);
-    turnRightProp(60);    
-    driveForwardProp(16);
-    intakeStage2.spin(forward);
-    wait(2,sec);
-    intakeStage2.stop(hold);
-    driveReverseProp(60);
-    turnRightProp(135);
-    driveForwardProp(20);
-    tongue.set(true);
-    wait(2,sec);
     tongue.set(false);
     adjust.set(true);
-    driveReverseProp(40);
-    intakeStage2.spin(forward);
-}
-
-void blueLeft(){
-    redLeft();
-}
-void redRight(){
-    tongue.set(false);//idk if flipped or not
-    adjust.set(true);
-    //intakeStage1.spin(forward);
     driveForwardProp(37,30);
-    turnRightProp(90);
+    turnLeftProp(90);
 
-   //tongue.set(true);
+    tongue.set(true);
+    wait(0.5,sec);
+    driveForwardProp(8.3,15,15);
     intakeStage1.spin(forward);
-    driveForwardProp(7);
     wait(2,sec);
-
     driveReverseProp(25);
+    tongue.set(false);
     adjust.set(true);
 
     intakeStage2.spin(forward);
     wait(2,sec);
 
     driveForwardProp(10,5,20);
+    turnLeftProp(90);
+    driveForwardProp(10);
+    turnRightProp(135);
+    driveReverseProp(30);
+}
+
+void blueLeft(){
+    redLeft();
+}
+void redRight(){
+    tongue.set(false);
+    adjust.set(true);
+    driveForwardProp(37,30);
+    turnRightProp(90);
+
+    tongue.set(true);
+    wait(0.5,sec);
+    driveForwardProp(8.3,15,15);
+    intakeStage1.spin(forward);
+    wait(2,sec);
+    driveReverseProp(25);
+    tongue.set(false);
+    adjust.set(true);
+
+    intakeStage2.spin(forward);
+    wait(2,sec);
+
+    driveForwardProp(10,5,20);
+    turnRightProp(90);
+    driveForwardProp(13);
+    turnRightProp(55);
+    driveForwardProp(30);
     }
 
 
@@ -369,6 +426,17 @@ void blueRight(){
 void debug(){
     driveForwardProp(-5);
 }
+
+void soloAWP(){
+    redRight();
+    driveReverseProp(5);
+    turnRightProp(45);
+    driveReverseProp(15);
+    turnLeftProp(90);
+    driveForwardProp(10);  
+
+}
+
 
 void pre_auton(void) {
 
@@ -544,7 +612,7 @@ void pre_auton(void) {
 //override auton to always run 1 auton for debug purposes
 
 void autonomous(void) {
-    skillsAuton();
+    redRight();
 }
 
 
@@ -555,10 +623,21 @@ void autonomous(void) {
         case DEBUG: debug(); break;
         case SOLO_AWP: soloAWP(); break;
         case PARK: parkAuton(); break;
-        
+        case BLUE_LEFT: blueLeft(); break;
+        case RED_LEFT: redLeft(); break;
+        case BLUE_RIGHT: blueRight(); break;
+        case RED_RIGHT: redRight(); break; 
         default: break;
     }
-    
+    // Stop all motors at end of autonomous
+    leftFrontTop.stop(coast);
+    leftFrontBottom.stop(coast);
+    leftBack.stop(coast);
+    rightFrontTop.stop(coast);
+    rightFrontBottom.stop(coast);
+    rightBack.stop(coast);
+    intakeStage1.stop(coast);
+    intakeStage2.stop(coast);
 }*/
 
 
@@ -621,8 +700,8 @@ void tongueManager() {
 
 
 void intakeManager(){
-    s1IntakeOn = true;
-    s2IntakeOn=true;
+    s1IntakeOn = false;
+    s2IntakeOn = false;
     while(1){
         if(controller1.ButtonR1.pressing()){
             while(controller1.ButtonR1.pressing()){
@@ -632,7 +711,7 @@ void intakeManager(){
             
         }
 
-        if(!s1IntakeOn){
+        if(s1IntakeOn){
             intakeStage1.spin(forward,100,pct);
         }else if(controller1.ButtonR2.pressing()){
             intakeStage1.spin(reverse, 100, pct);
@@ -653,9 +732,8 @@ void intakeManager(){
 }
 
 
-double logDrive(double raw) {
-    const double deadzone = 10.0;
-    const double maxInput = 127.0;
+double logDrive(double raw,double deadzone=5.0) {
+    const double maxInput = 100.0;
     const double curve = 5.0; 
     if (fabs(raw) < deadzone) return 0.0;
     double sign = (raw > 0) ? 1.0 : -1.0;
@@ -663,24 +741,37 @@ double logDrive(double raw) {
     double scaled = log10(1.0 + curve * x) / log10(1.0 + curve);
     return sign * scaled * maxInput;
 }
-//helper functionto clamp values for drive code
+
 double clamp(double v, double minV, double maxV) {
     return fmin(fmax(v, minV), maxV);
 }
 
+bool isBoosting = false;
+
+void toggleSpeed(){
+    isBoosting = !isBoosting;
+}
 
 void driveManager(){
+
     while(1) {
         int raw3 = controller1.Axis3.position();
         int raw1 = controller1.Axis1.position(); 
         double axis3 = logDrive(raw3);
-        double axis1 = logDrive(raw1);
+        double axis1 = (double)raw1; 
 
-        double turnBoost=1.5;
+        double turnBoost=1.0;
         axis1*=turnBoost;
+        double driveBoost=0.8;
+        controller1.ButtonDown.pressed(toggleSpeed);   
+        if(isBoosting) {
+            driveBoost=1.1;
+        }
+        else driveBoost=0.8;
+        axis3*=driveBoost;
 
-        double left = clamp(axis3 + axis1, -127, 127);
-        double right = clamp(axis3 - axis1, -127, 127);
+        double left = clamp(axis3 + axis1, -100, 100);
+        double right = clamp(axis3 - axis1, -100, 100);
 
         leftBack.spin(forward, left, pct);
         leftFrontBottom.spin(forward, left, pct);
@@ -710,6 +801,13 @@ void alignerManager(){
 }
 
 void usercontrol(void) {
+    leftBack.setStopping(hold);
+    leftFrontBottom.setStopping(hold);
+    leftFrontTop.setStopping(hold);
+    rightBack.setStopping(hold);
+    rightFrontBottom.setStopping(hold);
+    rightFrontTop.setStopping(hold);
+    
     //Brain.Screen.printAt(5,30,"Driving");
     //thread p(motorDegreeManagers);
     thread i(intakeManager);
