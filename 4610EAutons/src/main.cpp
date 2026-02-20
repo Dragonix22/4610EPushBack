@@ -15,17 +15,18 @@
 
 using namespace vex;
 using std::string;
+
 // A global instance of competition
 competition Competition;
-vex::brain Brain;
 
-// define your global instances of motors and other devices here
+vex::brain Brain;
+// define your global instances of motors and o mther devices here
 motor leftFrontTop = motor(PORT1,ratio36_1, false);
 motor leftFrontBottom = motor(PORT5,ratio36_1, true);
 motor leftBack = motor(PORT11,ratio36_1, true);
 motor rightFrontTop = motor(PORT6,ratio36_1, true);
 motor rightFrontBottom = motor(PORT10,ratio36_1, false);
-motor rightBack = motor(PORT17,ratio36_1, false);
+motor rightBack = motor(PORT15,ratio36_1, false);
 motor intakeStage1 = motor(PORT2,ratio36_1, true);
 motor intakeStage2 = motor(PORT4,ratio36_1, true);
 digital_out wing = digital_out(Brain.ThreeWirePort.C);
@@ -33,14 +34,14 @@ digital_out adjust = digital_out(Brain.ThreeWirePort.B);
 digital_out tongue = digital_out(Brain.ThreeWirePort.A);
 bool wingState = false;
 bool adjustState = false;
-bool tongueState = false;
+bool tongueState = false;   
 inertial inert = inertial(PORT16);
 controller controller1 = controller();
 bool s1IntakeOn = false;
 bool s2IntakeOn=false;
 bumper aligner = bumper(Brain.ThreeWirePort.H);
 double k_p_drive = 0.15;
-double k_p_turn = 0.15;
+double k_p_turn = 0.12;
 
 
 int autonPage=0;
@@ -79,7 +80,7 @@ double inchesToDegrees(double inches){
     //return 0.75 * ((inches*360.0)/(PI*wheelDiamater));//0.75 gear ratio 36:48 
 }
 
-void driveForwardProp(double distance,double minSpeed=40, double maxSpeed=40){
+void driveForwardProp(double distance,double minSpeed=40, double maxSpeed=40, double timeoutMs=10000){
     leftFrontTop.resetPosition();
     leftFrontBottom.resetPosition();
     leftBack.resetPosition();
@@ -91,7 +92,9 @@ void driveForwardProp(double distance,double minSpeed=40, double maxSpeed=40){
     double position = (leftFrontTop.position(deg) + leftFrontBottom.position(deg) + leftBack.position(deg) + rightFrontTop.position(deg) + rightFrontBottom.position(deg) + rightBack.position(deg)) / 6.0;
     double error = target - position;
     //printf("drive forward: %f\n", target);
-    while(fabs(error)>8){
+    timer driveTimer;
+    driveTimer.clear();
+    while(fabs(error)>8 && driveTimer.time(msec) < timeoutMs){
         position = (leftFrontTop.position(deg) + leftFrontBottom.position(deg) + leftBack.position(deg) + rightFrontTop.position(deg) + rightFrontBottom.position(deg) + rightBack.position(deg)) / 6.0;
         error = target - position;
 
@@ -123,8 +126,8 @@ void driveForwardProp(double distance,double minSpeed=40, double maxSpeed=40){
     rightBack.stop(hold);
     
 }
-void driveReverseProp(double distance,double minSpeed=40, double maxSpeed=40){
-    driveForwardProp(-1*distance,minSpeed,maxSpeed);
+void driveReverseProp(double distance,double minSpeed=40, double maxSpeed=40, double timeoutMs=10000){
+    driveForwardProp(-1*distance,minSpeed,maxSpeed,timeoutMs);
 }
 
 /*
@@ -173,7 +176,6 @@ void driveReverseProp(double distance,double minSpeed=40, double maxSpeed=40){
 void turnLeftProp(double degreesTarget, double minSpeed=5, double maxSpeed=50) {
     inert.resetRotation();
     double k_p = k_p_turn;
-
     double current = inert.rotation(degrees);
     double error = degreesTarget - current;
     //printf("turn left: %f\n", degreesTarget);
@@ -252,106 +254,144 @@ void turnRightProp(double degreesTarget, double minSpeed=5, double maxSpeed=50) 
 //diagonal of two by 1 tile is sqrt(48^2 + 24^2) = 53.67 inches
 //robot db length is 15 inches
 
-//simple skills auto
+
 
 void skillsAuton(){
+
+    intakeStage2.setVelocity(100,percent);
+    intakeStage1.setVelocity(100,percent);
     
     tongue.set(false);
     adjust.set(true);
-    driveForwardProp(32,30);
+    //drive to side
+    driveForwardProp(38.5,30);
     turnRightProp(90);
-
-    tongue.set(true);
-    wait(0.5,sec);
-    driveForwardProp(8.3,15,15);
+    //drive to loader   
     intakeStage1.spin(forward);
-    wait(4,sec);
+    tongue.set(true);
+    wait(0.5,sec); 
+    driveForwardProp(9.5,15,15,3000);
+    wait(2.3,sec);
     driveReverseProp(2);
     tongue.set(false);
-
-    turnRightProp(45);
-    driveReverseProp(19);
-    turnLeftProp(45);
-
-    driveReverseProp(60);
+    //turn to corner
+    turnRightProp(60);
+    intakeStage1.stop(hold);
+    driveReverseProp(16,20,40,2500);
+    turnLeftProp(58);
+    //drive to other side
+    driveReverseProp(80,30,35,10000);
     turnRightProp(90);
-
-    driveForwardProp(10);
+    //center
+    driveForwardProp(11.5,20,50,2000);
     turnRightProp(90);
-    
-    driveReverseProp(10);
-    intakeStage2.spin(forward);
-    wait(5,sec);
-    intakeStage2.stop(hold);
-
-    tongue.set(true);
-    driveForwardProp(20,15,15);
+    //drive to goal & score
+    driveReverseProp(10.6,15,40,2500); 
+    adjust.set(true);
+    intakeStage1.spinFor(reverse,50,msec);
     intakeStage1.spin(forward);
-    wait(4,sec);
-    driveReverseProp(20);
+    intakeStage2.spin(forward);
+    wait(3.5,sec);
+    //drive to loader
+    tongue.set(true);
+    wait(0.5,sec);
+    driveForwardProp(26.5,15,15,3000);
+    intakeStage2.stop(hold);
+    wait(3,sec);
+    turnLeftProp(5);
+    //score
+    driveReverseProp(28,40,40,3000);
+    tongue.set(false);
+    intakeStage1.spinFor(reverse,50,msec);
+    intakeStage1.spin(forward);
     intakeStage2.spin(forward);
     wait(5,sec);
     intakeStage2.stop(hold);
-    tongue.set(false);
-    driveForwardProp(15);
+
+    driveForwardProp(5);
     turnLeftProp(90);
 
 //halfway
-    driveForwardProp(32);
-    turnRightProp(90);
+    driveForwardProp(55,50,60);
+    /*driveForwardProp(32);
+    turnLeftProp(45);
+    intakeStage1.spin(forward);
+    driveForwardProp(15,10,20);
+    driveForwardProp(5,40,50);
+    turnLeftProp(45);
+    driveForwardProp(10);
+    turnRightProp(45);
+    */
     
 
 //duplicated
+    intakeStage2.setVelocity(100,percent);
+    intakeStage1.setVelocity(100,percent);
+    tongue.set(false);
+    adjust.set(true);
+    //drive to side
+    driveForwardProp(38,30);
+    turnRightProp(90);
+    //drive to loader   
+    intakeStage1.spinFor(reverse,50,msec);
+    intakeStage1.spin(forward);
     tongue.set(true);
     wait(0.5,sec);
-    driveForwardProp(8.3,15,15);
-    intakeStage1.spin(forward);
-    wait(4,sec);
-    driveReverseProp(7);
+    driveForwardProp(17.3,15,15,2500);
+    wait(2.3,sec);
+    driveReverseProp(25,15,40,3000);
+    intakeStage2.spin(forward);
     tongue.set(false);
-    turnRightProp(45);
-    driveReverseProp(17);
-    turnLeftProp(45);
-
-    driveReverseProp(60);
+    wait(3,sec);
+    driveForwardProp(5);
+    turnRightProp(90); 
+    driveForwardProp(15);
+    turnRightProp(90); 
+    wing.set(true);
+    driveForwardProp(55,30,50,6000);
     turnRightProp(90);
-
-    driveForwardProp(10);
+    driveForwardProp(10,30,50);
+    /*
+    //turn to corner
+    turnRightProp(60);
+    intakeStage1.stop(hold);
+    driveReverseProp(15,20,40);
+    turnLeftProp(58);
+    //drive to other side
+    driveReverseProp(80,30,35);
     turnRightProp(90);
-    
-    driveReverseProp(25);
+    //center
+    driveForwardProp(11.25,20,50);
+    turnRightProp(90);
+    //drive to goal & score
+    driveReverseProp(11,15,40); 
+    adjust.set(true);
+    intakeStage1.spinFor(reverse,50,msec);
+    intakeStage1.spin(forward);
+    intakeStage2.spin(forward);
+    wait(3.5,sec);
+    //drive to loader
+    tongue.set(true);
+    wait(0.5,sec);
+    turnLeftProp(10);
+    driveForwardProp(26.5,15,15);
+    intakeStage2.stop(hold);
+    wait(3,sec);
+    turnLeftProp(5);
+    //score
+    driveReverseProp(28,40,40);
+    tongue.set(false);
+    intakeStage1.spin(forward);
     intakeStage2.spin(forward);
     wait(5,sec);
     intakeStage2.stop(hold);
 
-    tongue.set(true);
-    driveForwardProp(8.3,15,15);
-    intakeStage1.spin(forward);
-    wait(4,sec);
-    driveReverseProp(10);
-    turnLeftProp(70);
-    //driveForwardProp(20,50,50);
-
-
- /*
-    turnRightProp(90); 
-
-    driveForwardProp(40,30);
-    turnLeftProp(90);
-    tongue.set(true);
-    intakeStage1.spin(forward);
-    driveForwardProp(2);
-    wait(2,sec);
-
-    driveReverseProp(4);
-    adjust.set(true);
-    intakeStage2.spin(forward);
-    wait(2,sec);
-    adjust.set(false);
-    tongue.set(false);
-    intakeStage2.stop(hold);
-*/
-    //drive to other side of field and either repeat or empty both loaders
+    driveForwardProp(3);
+    turnLeftProp(45);
+    driveForwardProp(14);
+    turnLeftProp(45);
+    driveForwardProp(15);
+    */
 }
 
 
@@ -366,6 +406,36 @@ void parkAuton(){
 
 
 void redLeft(){
+    intakeStage2.setVelocity(100,percent);
+    intakeStage1.setVelocity(100,percent);
+    tongue.set(false);
+    adjust.set(false);
+
+    intakeStage1.spin(forward);
+    driveForwardProp(27,10,20);
+    wait(1,sec);
+    turnLeftProp(100);
+    driveReverseProp(14);
+    intakeStage2.spin(forward);
+    wait(2,sec);
+    driveForwardProp(12);
+    turnLeftProp(45);
+    driveForwardProp(20);
+    turnRightProp(90);
+    driveForwardProp(25);
+    turnLeftProp(90-15);
+    driveForwardProp(31);
+    turnRightProp(85);
+    //driveReverseProp(14);
+    //intakeStage2.spin(forward);
+    tongue.set(true);
+    wait(3,sec);
+    intakeStage2.stop(hold);
+    driveForwardProp(25,20,20);
+    wait(2.5,sec);
+    driveReverseProp(25,30,50);
+    intakeStage2.spin(forward);
+    /*
     tongue.set(false);
     adjust.set(true);
     driveForwardProp(37,30);
@@ -388,17 +458,57 @@ void redLeft(){
     driveForwardProp(10);
     turnRightProp(135);
     driveReverseProp(30);
+    */
 }
 
 void blueLeft(){
     redLeft();
 }
 void redRight(){
+    intakeStage2.setVelocity(100,percent);
+    intakeStage1.setVelocity(100,percent);
+    tongue.set(false);
+    adjust.set(true);
+
+    intakeStage1.spin(forward);
+    driveForwardProp(25,10,20);
+    wait(1,sec);
+    driveReverseProp(19);
+    turnRightProp(90-15);
+    driveForwardProp(31);
+    turnRightProp(85);
+    //driveReverseProp(14);
+    //intakeStage2.spin(forward);
+    tongue.set(true);
+    wait(3,sec);
+    intakeStage2.stop(hold);
+    driveForwardProp(25,20,20);
+    wait(2.5,sec);
+    driveReverseProp(15,30,50);
+    intakeStage2.spin(forward);
+    /*
+    intakeStage2.setVelocity(100,percent);
+    intakeStage1.setVelocity(100,percent);
+    tongue.set(false);
+    adjust.set(true);
+
+    intakeStage1.spin(forward);
+    driveForwardProp(25,10,20);
+    wait(1,sec);
+    driveReverseProp(19);
+    turnRightProp(90-15);
+    driveForwardProp(31,10,15);
+    turnRightProp(85);
+    driveReverseProp(14);
+    intakeStage2.spin(forward);
+    wait(3,sec);
+    */
+    /*
     tongue.set(false);
     adjust.set(true);
     driveForwardProp(37,30);
     turnRightProp(90);
-
+.,,,,,,,,,,,,,,,,,,
     tongue.set(true);
     wait(0.5,sec);
     driveForwardProp(8.3,15,15);
@@ -416,6 +526,7 @@ void redRight(){
     driveForwardProp(13);
     turnRightProp(55);
     driveForwardProp(30);
+    */
     }
 
 
@@ -424,7 +535,7 @@ void blueRight(){
 }
 
 void debug(){
-    driveForwardProp(-5);
+    driveForwardProp(5);
 }
 
 void soloAWP(){
@@ -439,7 +550,12 @@ void soloAWP(){
 
 
 void pre_auton(void) {
-
+    leftBack.setStopping(brake);
+    leftFrontBottom.setStopping(brake);
+    leftFrontTop.setStopping(brake);
+    rightBack.setStopping(brake);
+    rightFrontBottom.setStopping(brake);
+    rightFrontTop.setStopping(brake);
     tongue.set(false);
     wing.set(false);
     adjust.set(false);
@@ -610,13 +726,12 @@ void pre_auton(void) {
 /*  You must modify the code to add your own robot specific commands here.   */
 /*---------------------------------------------------------------------------*/
 //override auton to always run 1 auton for debug purposes
-
-void autonomous(void) {
-    redRight();
-}
-
-
 /*
+void autonomous(void) {
+    skillsAuton();
+}
+*/
+
 void autonomous(void) {
     switch(currAuton) {
         case SKILLS: skillsAuton(); break;
@@ -638,7 +753,7 @@ void autonomous(void) {
     rightBack.stop(coast);
     intakeStage1.stop(coast);
     intakeStage2.stop(coast);
-}*/
+}
 
 
 /*---------------------------------------------------------------------------*/
@@ -666,6 +781,7 @@ void wingMananger(){
         wing.set(wingState);
     }
 }
+
 
 void adjustMananger(){
     adjustState = true;
@@ -698,11 +814,16 @@ void tongueManager() {
     }
 }
 
-
+int s2Speed = 100;
 void intakeManager(){
     s1IntakeOn = false;
     s2IntakeOn = false;
     while(1){
+        if(controller1.ButtonLeft.pressing()){
+           if(s2Speed>10) s2Speed=50;
+           else s2Speed=100;
+        }
+
         if(controller1.ButtonR1.pressing()){
             while(controller1.ButtonR1.pressing()){
                 wait(10, msec);
@@ -720,9 +841,9 @@ void intakeManager(){
         } 
 
         if(controller1.ButtonL1.pressing()){
-            intakeStage2.spin(forward,100,pct);
+            intakeStage2.spin(forward,s2Speed,pct);
         }else if(controller1.ButtonL2.pressing()){
-            intakeStage2.spin(reverse, 100, pct);
+            intakeStage2.spin(reverse, s2Speed, pct);
         }else{
             intakeStage2.stop();
         }
@@ -747,10 +868,13 @@ double clamp(double v, double minV, double maxV) {
 }
 
 bool isBoosting = false;
+bool lastButtonState = false;
 
-void toggleSpeed(){
-    isBoosting = !isBoosting;
+void toggle(bool& b){
+    b = !b;
 }
+
+
 
 void driveManager(){
 
@@ -758,12 +882,19 @@ void driveManager(){
         int raw3 = controller1.Axis3.position();
         int raw1 = controller1.Axis1.position(); 
         double axis3 = logDrive(raw3);
-        double axis1 = (double)raw1; 
+        double axis1 = logDrive(raw1); 
 
-        double turnBoost=1.0;
+        double turnBoost=0.6;
         axis1*=turnBoost;
-        double driveBoost=0.8;
-        controller1.ButtonDown.pressed(toggleSpeed);   
+        double driveBoost=0.6;  
+
+        //boost macro for parking        
+        bool currentButtonState = controller1.ButtonDown.pressing();
+        if(currentButtonState && !lastButtonState) {
+            toggle(isBoosting);
+        }
+        lastButtonState = currentButtonState;
+        
         if(isBoosting) {
             driveBoost=1.1;
         }
@@ -801,12 +932,13 @@ void alignerManager(){
 }
 
 void usercontrol(void) {
-    leftBack.setStopping(hold);
-    leftFrontBottom.setStopping(hold);
-    leftFrontTop.setStopping(hold);
-    rightBack.setStopping(hold);
-    rightFrontBottom.setStopping(hold);
-    rightFrontTop.setStopping(hold);
+
+    leftBack.setStopping(brake);
+    leftFrontBottom.setStopping(brake);
+    leftFrontTop.setStopping(brake);
+    rightBack.setStopping(brake);
+    rightFrontBottom.setStopping(brake);
+    rightFrontTop.setStopping(brake);
     
     //Brain.Screen.printAt(5,30,"Driving");
     //thread p(motorDegreeManagers);
