@@ -398,6 +398,7 @@ void skillsAuton(){
 
 
 void parkAuton(){
+    //should work whether going from front or sides, might need to change the distance in general 
     tongue.set(false);
     intakeStage1.spin(forward);
     driveForwardProp(7,50);
