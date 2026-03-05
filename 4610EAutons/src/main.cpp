@@ -263,6 +263,7 @@ void skillsAuton(){
     
     tongue.set(false);
     adjust.set(true);
+    wing.set(true);
     //drive to side
     driveForwardProp(38.5,30);
     turnRightProp(90);
@@ -270,7 +271,7 @@ void skillsAuton(){
     intakeStage1.spin(forward);
     tongue.set(true);
     wait(0.5,sec); 
-    driveForwardProp(9.5,15,15,3000);
+    driveForwardProp(9.4 ,15,15,2500);
     wait(2.3,sec);
     driveReverseProp(2);
     tongue.set(false);
@@ -283,10 +284,10 @@ void skillsAuton(){
     driveReverseProp(80,30,35,10000);
     turnRightProp(90);
     //center
-    driveForwardProp(11.5,20,50,2000);
+    driveForwardProp(11.5,20,50,2500);
     turnRightProp(90);
-    //drive to goal & score
-    driveReverseProp(10.6,15,40,2500); 
+    //drive to long goal & score
+    driveReverseProp(10.6,15,40,3000); 
     adjust.set(true);
     intakeStage1.spinFor(reverse,50,msec);
     intakeStage1.spin(forward);
@@ -295,11 +296,11 @@ void skillsAuton(){
     //drive to loader
     tongue.set(true);
     wait(0.5,sec);
-    driveForwardProp(26.5,15,15,3000);
+    driveForwardProp(26.5,15,15,2000);
     intakeStage2.stop(hold);
     wait(3,sec);
     turnLeftProp(5);
-    //score
+    //score on long goal x2
     driveReverseProp(28,40,40,3000);
     tongue.set(false);
     intakeStage1.spinFor(reverse,50,msec);
@@ -307,10 +308,17 @@ void skillsAuton(){
     intakeStage2.spin(forward);
     wait(5,sec);
     intakeStage2.stop(hold);
-
+    //attempt to park
     driveForwardProp(5);
     turnLeftProp(90);
-
+    driveForwardProp(15);
+    turnLeftProp(90);
+    driveForwardProp(120,30,50,6000);
+    turnRightProp(95);
+    intakeStage1.spin(forward);
+    intakeStage2.spin(forward);
+    driveForwardProp(30,80,100,4000);
+    /*
 //halfway
     driveForwardProp(55,50,60);
     /*driveForwardProp(32);
@@ -321,7 +329,7 @@ void skillsAuton(){
     turnLeftProp(45);
     driveForwardProp(10);
     turnRightProp(45);
-    */
+    
     
 
 //duplicated
@@ -351,46 +359,6 @@ void skillsAuton(){
     driveForwardProp(55,30,50,6000);
     turnRightProp(90);
     driveForwardProp(10,30,50);
-    /*
-    //turn to corner
-    turnRightProp(60);
-    intakeStage1.stop(hold);
-    driveReverseProp(15,20,40);
-    turnLeftProp(58);
-    //drive to other side
-    driveReverseProp(80,30,35);
-    turnRightProp(90);
-    //center
-    driveForwardProp(11.25,20,50);
-    turnRightProp(90);
-    //drive to goal & score
-    driveReverseProp(11,15,40); 
-    adjust.set(true);
-    intakeStage1.spinFor(reverse,50,msec);
-    intakeStage1.spin(forward);
-    intakeStage2.spin(forward);
-    wait(3.5,sec);
-    //drive to loader
-    tongue.set(true);
-    wait(0.5,sec);
-    turnLeftProp(10);
-    driveForwardProp(26.5,15,15);
-    intakeStage2.stop(hold);
-    wait(3,sec);
-    turnLeftProp(5);
-    //score
-    driveReverseProp(28,40,40);
-    tongue.set(false);
-    intakeStage1.spin(forward);
-    intakeStage2.spin(forward);
-    wait(5,sec);
-    intakeStage2.stop(hold);
-
-    driveForwardProp(3);
-    turnLeftProp(45);
-    driveForwardProp(14);
-    turnLeftProp(45);
-    driveForwardProp(15);
     */
 }
 
@@ -398,44 +366,52 @@ void skillsAuton(){
 
 
 void parkAuton(){
-    //should work whether going from front or sides, might need to change the distance in general 
+    leftFrontBottom.setVelocity(100,percent);
+    leftFrontTop.setVelocity(100,percent);
+    leftBack.setVelocity(100,percent);
+    rightFrontBottom.setVelocity(100,percent);
+    rightFrontTop.setVelocity(100,percent);
+    rightBack.setVelocity(100,percent);
     tongue.set(false);
     intakeStage1.spin(forward);
-    driveForwardProp(7,50);
+    driveForwardProp(27,50);
+    wait(3,sec);
 }
 
 
 
 void redLeft(){
-    intakeStage2.setVelocity(100,percent);
+    intakeStage2.setVelocity(50,percent);
     intakeStage1.setVelocity(100,percent);
     tongue.set(false);
     adjust.set(false);
 
     intakeStage1.spin(forward);
-    driveForwardProp(27,10,20);
-    wait(1,sec);
-    turnLeftProp(100);
-    driveReverseProp(14);
+    //collect blocks and score in side goal
+    driveForwardProp(27,10,20,3000);
+    wait(0.5,sec);
+    turnLeftProp(110);
+    driveReverseProp(15,30,45,2000);
     intakeStage2.spin(forward);
     wait(2,sec);
-    driveForwardProp(12);
-    turnLeftProp(45);
-    driveForwardProp(20);
-    turnRightProp(90);
-    driveForwardProp(25);
-    turnLeftProp(90-15);
-    driveForwardProp(31);
-    turnRightProp(85);
-    //driveReverseProp(14);
-    //intakeStage2.spin(forward);
-    tongue.set(true);
-    wait(3,sec);
+    //drive to center on loader
+    driveForwardProp(17,30,50,3000);
     intakeStage2.stop(hold);
-    driveForwardProp(25,20,20);
-    wait(2.5,sec);
-    driveReverseProp(25,30,50);
+    turnLeftProp(45);
+    driveForwardProp(20,50,70,3000);
+    turnRightProp(90);
+    driveForwardProp(20,50,70,3000);
+    turnLeftProp(90);
+    tongue.set(true);
+    //get blocks from loader
+    driveForwardProp(12.5,10,20,500);
+    wait(0.25,sec);
+    intakeStage2.setVelocity(100,percent);
+    //score on long goal
+    turnRightProp(10);
+    driveReverseProp(40,30,50,1000);
     intakeStage2.spin(forward);
+    wait(3,sec);
     /*
     tongue.set(false);
     adjust.set(true);
@@ -461,11 +437,35 @@ void redLeft(){
     driveReverseProp(30);
     */
 }
-
+//cmd+shift+i = disable vim 
 void blueLeft(){
     redLeft();
 }
 void redRight(){
+    intakeStage2.setVelocity(50,percent);
+    intakeStage1.setVelocity(100,percent);
+    tongue.set(false);
+    adjust.set(true);
+
+    intakeStage1.spin(forward);
+    //collect blocks and score in side goal
+    driveForwardProp(25,10,20);
+    tongue.set(true);
+    wait(0.5,sec);
+    turnRightProp(90);
+    wait(0.5,sec);
+    //drive to center on loader
+    driveForwardProp(25);
+    turnRightProp(55);
+    //drive to loader
+    intakeStage2.setVelocity(100,percent);
+    driveForwardProp(20,10,20,1500);
+    wait(1.75,sec);
+    turnLeftProp(5);
+    driveReverseProp(25,30,50,3000);
+    intakeStage2.spin(forward);
+    wait(3,sec);
+    /*
     intakeStage2.setVelocity(100,percent);
     intakeStage1.setVelocity(100,percent);
     tongue.set(false);
@@ -487,46 +487,6 @@ void redRight(){
     wait(2.5,sec);
     driveReverseProp(15,30,50);
     intakeStage2.spin(forward);
-    /*
-    intakeStage2.setVelocity(100,percent);
-    intakeStage1.setVelocity(100,percent);
-    tongue.set(false);
-    adjust.set(true);
-
-    intakeStage1.spin(forward);
-    driveForwardProp(25,10,20);
-    wait(1,sec);
-    driveReverseProp(19);
-    turnRightProp(90-15);
-    driveForwardProp(31,10,15);
-    turnRightProp(85);
-    driveReverseProp(14);
-    intakeStage2.spin(forward);
-    wait(3,sec);
-    */
-    /*
-    tongue.set(false);
-    adjust.set(true);
-    driveForwardProp(37,30);
-    turnRightProp(90);
-.,,,,,,,,,,,,,,,,,,
-    tongue.set(true);
-    wait(0.5,sec);
-    driveForwardProp(8.3,15,15);
-    intakeStage1.spin(forward);
-    wait(2,sec);
-    driveReverseProp(25);
-    tongue.set(false);
-    adjust.set(true);
-
-    intakeStage2.spin(forward);
-    wait(2,sec);
-
-    driveForwardProp(10,5,20);
-    turnRightProp(90);
-    driveForwardProp(13);
-    turnRightProp(55);
-    driveForwardProp(30);
     */
     }
 
@@ -540,17 +500,13 @@ void debug(){
 }
 
 void soloAWP(){
-    redRight();
-    driveReverseProp(5);
-    turnRightProp(45);
-    driveReverseProp(15);
-    turnLeftProp(90);
-    driveForwardProp(10);  
-
+    intakeStage1.spin(forward);
 }
 
 
 void pre_auton(void) {
+    intakeStage1.setVelocity(100,percent);
+    intakeStage2.setVelocity(100,percent);
     leftBack.setStopping(brake);
     leftFrontBottom.setStopping(brake);
     leftFrontTop.setStopping(brake);
@@ -878,7 +834,7 @@ void toggle(bool& b){
 
 
 void driveManager(){
-
+    wing.set(false);
     while(1) {
         int raw3 = controller1.Axis3.position();
         int raw1 = controller1.Axis1.position(); 
