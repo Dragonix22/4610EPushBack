@@ -249,6 +249,82 @@ void turnRightProp(double degreesTarget, double minSpeed=5, double maxSpeed=50) 
 
 }
 
+void swingLeftProp(double degreesTarget, double minSpeed=5, double maxSpeed=50) {
+
+    inert.resetRotation();
+    double k_p = k_p_turn;
+
+    double current = inert.rotation(deg);
+    double error = degreesTarget - current;
+
+    while(fabs(error) > 5){
+
+        current = inert.rotation(deg);
+        error = degreesTarget - current;
+
+        double speed = k_p * error;
+
+        if (speed > 0) speed = std::max(speed, minSpeed);
+        else if (speed < 0) speed = std::min(speed, -minSpeed);
+
+        speed = std::min(std::max(speed, -maxSpeed), maxSpeed);
+
+        // LEFT SIDE LOCKED
+        leftFrontTop.stop(hold);
+        leftFrontBottom.stop(hold);
+        leftBack.stop(hold);
+
+        // RIGHT SIDE MOVES
+        rightFrontTop.spin(forward, speed, pct);
+        rightFrontBottom.spin(forward, speed, pct);
+        rightBack.spin(forward, speed, pct);
+
+        wait(10, msec);
+    }
+
+    rightFrontTop.stop(hold);
+    rightFrontBottom.stop(hold);
+    rightBack.stop(hold);
+}
+
+void swingRightProp(double degreesTarget, double minSpeed=5, double maxSpeed=50) {
+
+    inert.resetRotation();
+    double k_p = k_p_turn;
+
+    double current = inert.rotation(deg);
+    double error = degreesTarget - current;
+
+    while(fabs(error) > 5){
+
+        current = inert.rotation(deg);
+        error = degreesTarget - current;
+
+        double speed = k_p * error;
+
+        if (speed > 0) speed = std::max(speed, minSpeed);
+        else if (speed < 0) speed = std::min(speed, -minSpeed);
+
+        speed = std::min(std::max(speed, -maxSpeed), maxSpeed);
+
+        // RIGHT SIDE LOCKED
+        rightFrontTop.stop(hold);
+        rightFrontBottom.stop(hold);
+        rightBack.stop(hold);
+
+        // LEFT SIDE MOVES
+        leftFrontTop.spin(forward, speed, pct);
+        leftFrontBottom.spin(forward, speed, pct);
+        leftBack.spin(forward, speed, pct);
+
+        wait(10, msec);
+    }
+
+    leftFrontTop.stop(hold);
+    leftFrontBottom.stop(hold);
+    leftBack.stop(hold);
+}
+
 //each tile is 24 inches
 //diagonal of tile is sqrt(24^2 + 24^2) = 33.94 inches
 //diagonal of two by 1 tile is sqrt(48^2 + 24^2) = 53.67 inches
@@ -321,7 +397,7 @@ void skillsAuton(){
     /*
 //halfway
     driveForwardProp(55,50,60);
-    /*driveForwardProp(32);
+    driveForwardProp(32);
     turnLeftProp(45);
     intakeStage1.spin(forward);
     driveForwardProp(15,10,20);
@@ -455,14 +531,17 @@ void redRight(){
     turnRightProp(90);
     wait(0.5,sec);
     //drive to center on loader
-    driveForwardProp(25);
+    driveForwardProp(28);
     turnRightProp(55);
     //drive to loader
     intakeStage2.setVelocity(100,percent);
-    driveForwardProp(20,10,20,1500);
-    wait(1.75,sec);
+    driveForwardProp(20.5,10,20,1500);
+    wait(1.25,sec);
     turnLeftProp(5);
-    driveReverseProp(25,30,50,3000);
+    driveReverseProp(27,30,50,3000);
+    intakeStage1.spinFor(forward,50,msec);
+    intakeStage2.spinFor(forward,50,msec);
+
     intakeStage2.spin(forward);
     wait(3,sec);
     /*
@@ -500,7 +579,57 @@ void debug(){
 }
 
 void soloAWP(){
+    intakeStage2.setVelocity(100,percent);
+    intakeStage1.setVelocity(100,percent);
+    
+    tongue.set(false);
+    adjust.set(true);
+    wing.set(true);
+    //drive to side
+    driveForwardProp(38.8,30);
+    turnRightProp(90);
+    //drive to loader   
     intakeStage1.spin(forward);
+    tongue.set(true);
+    wait(0.1,sec); 
+    driveForwardProp(10.2,15,15,2500);
+    wait(0.7,sec);
+    //score on long goal
+    driveReverseProp(26.7,20,30,2000);
+    intakeStage2.spin(forward);
+    tongue.set(false);
+    wait(3,sec);
+    //get field blocks right 
+    driveForwardProp(5);
+    intakeStage2.stop(hold);
+    turnRightProp(90);
+    driveForwardProp(4);
+    turnRightProp(45); 
+    intakeStage1.spin(forward);
+    driveForwardProp(15.4,20,20);
+    turnLeftProp(46);
+    driveForwardProp(49.7);
+    turnLeftProp(45);
+    driveReverseProp(18);
+    adjust.set(true);
+    intakeStage2.spin(forward);
+    wait(2,sec);
+    driveForwardProp(10);
+    turnLeftProp(45);
+    driveForwardProp(16);
+    turnRightProp(90);
+    driveForwardProp(20);
+    turnLeftProp(90);
+    tongue.set(true);
+    driveForwardProp(10.3);
+    wait(0.5,sec);
+    turnLeftProp(90);
+    driveForwardProp(10,20,40);
+    wait(3,sec);
+    driveReverseProp(20);
+    intakeStage2.spin(forward);
+
+
 }
 
 
